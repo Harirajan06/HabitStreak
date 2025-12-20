@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Streakly Shop Admin</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f5f5f7;
+        --card: #ffffff;
+        --border: #e1e3e8;
+        --text: #0f172a;
+        --muted: #64748b;
+        --primary: #2563eb;
+        --primary-dark: #1d4ed8;
+        --success: #16a34a;
+        --warning: #d97706;
+        --danger: #dc2626;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1a1a1a;
+          --card: #2a2a2a;
+          --border: #444;
+          --text: #f0f0f0;
+          --muted: #a0a0a0;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 32px;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 28px;
+      }
+
+      header .subline {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      main {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      }
+
+      .card.is-full {
+        grid-column: 1 / -1;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+      }
+
+      .card h2 {
+        margin: 0 0 16px;
+        font-size: 20px;
+      }
+
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+
+      button,
+      select,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 12px;
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn.primary {
+        background: var(--primary);
+        color: #fff;
+      }
+
+      .btn.primary:hover {
+        background: var(--primary-dark);
+      }
+
+      .btn.ghost {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--border);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th.image-col {
+        width: 80px;
+      }
+
+      thead th {
+        text-align: left;
+        padding: 12px 8px;
+        color: var(--muted);
+        font-weight: 600;
+        border-bottom: 1px solid var(--border);
+      }
+
+      tbody td {
+        padding: 16px 8px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      .product-name {
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .product-thumb {
+        width: 72px;
+      }
+
+      .product-thumb img,
+      .product-thumb .fallback-thumb {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        object-fit: cover;
+        border: 1px solid var(--border);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.04);
+        color: var(--muted);
+        font-size: 22px;
+      }
+
+      .status-draft {
+        background: rgba(217, 119, 6, 0.15);
+        color: var(--warning);
+      }
+
+      .status-active {
+        background: rgba(22, 163, 74, 0.15);
+        color: var(--success);
+      }
+
+      .status-archived {
+        background: rgba(100, 116, 139, 0.2);
+        color: var(--muted);
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: var(--card);
+        color: var(--text);
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+
+      .grid-2 {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      @media (max-width: 600px) {
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      #console {
+        margin-top: 18px;
+        font-size: 13px;
+        min-height: 18px;
+      }
+
+      #console span {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      #console .success {
+        color: var(--success);
+      }
+
+      #console .error {
+        color: var(--danger);
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .actions .btn {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 24px;
+        color: var(--muted);
+      }
+
+      .categories-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .category-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: rgba(37, 99, 235, 0.03);
+      }
+
+      .category-item h3 {
+        margin: 0 0 4px;
+        font-size: 16px;
+      }
+
+      .category-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-end;
+      }
+
+      .category-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Streakly Shop Admin</h1>
+        <div class="subline">
+          Manage Supabase-backed product catalog in real time.
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn ghost" id="refreshBtn">Refresh</button>
+        <button class="btn primary" id="newDraftBtn">Add Draft</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card is-full">
+        <div class="toolbar">
+          <h2>Products</h2>
+          <select id="statusFilter">
+            <option value="all">All statuses</option>
+            <option value="draft">Draft</option>
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th class="image-col">Image</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Inventory</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="productsBody">
+              <tr>
+                <td colspan="6" class="empty-state">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Create / Update Product</h2>
+        <form id="productForm">
+          <div>
+            <label for="nameInput">Product name</label>
+            <input id="nameInput" name="name" placeholder="Premium Water Bottle" required />
+          </div>
+          <div>
+            <label for="slugInput">Slug</label>
+            <input id="slugInput" name="slug" placeholder="premium-water-bottle" required />
+          </div>
+          <div>
+            <label for="descriptionInput">Description</label>
+            <textarea id="descriptionInput" name="description" placeholder="Tell customers what makes this great"></textarea>
+          </div>
+          <div>
+            <label for="categorySelect">Category</label>
+            <select id="categorySelect" name="category">
+              <option value="" selected disabled>Loading categories…</option>
+            </select>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label for="priceInput">Price (INR)</label>
+              <input id="priceInput" name="price" type="number" min="0" step="0.01" placeholder="2499" required />
+            </div>
+            <div>
+              <label for="currencyInput">Currency</label>
+              <input id="currencyInput" name="currency" value="INR" maxlength="3" required />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label for="skuInput">SKU</label>
+              <input id="skuInput" name="sku" placeholder="SKU-001" />
+            </div>
+            <div>
+              <label for="stockInput">Stock quantity</label>
+              <input id="stockInput" name="stock" type="number" min="0" step="1" value="0" />
+            </div>
+          </div>
+          <div>
+            <label for="statusSelect">Status</label>
+            <select id="statusSelect" name="status">
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <button class="btn primary" type="submit">Save Product</button>
+          <div id="console"></div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Manage Categories</h2>
+        <div id="categoriesList" class="categories-list">
+          <div class="empty-state">Loading categories…</div>
+        </div>
+        <form id="categoryForm">
+          <input type="hidden" id="categoryIdInput" name="categoryId" />
+          <div>
+            <label for="categoryNameInput">Category name</label>
+            <input id="categoryNameInput" name="categoryName" placeholder="Fitness" required />
+          </div>
+          <div>
+            <label for="categorySlugInput">Slug</label>
+            <input id="categorySlugInput" name="categorySlug" placeholder="fitness" required />
+          </div>
+          <div>
+            <label for="categoryDescriptionInput">Description</label>
+            <textarea id="categoryDescriptionInput" name="categoryDescription" placeholder="Optional description"></textarea>
+          </div>
+          <div>
+            <label for="categorySortInput">Sort order</label>
+            <input id="categorySortInput" name="categorySort" type="number" min="0" step="1" value="0" />
+          </div>
+          <div class="actions">
+            <button class="btn primary" type="submit">Save Category</button>
+            <button class="btn ghost" type="button" id="resetCategoryBtn">Reset</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script type="module">
+      import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.46.1';
+
+      // TODO: Replace with your project credentials
+      const SUPABASE_URL = window.localStorage.getItem('streakly_supabase_url') ?? 'https://zpohnnokdhrsclmnfstd.supabase.co';
+      const SUPABASE_ANON_KEY = window.localStorage.getItem('streakly_supabase_key') ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpwb2hubm9rZGhyc2NsbW5mc3RkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MDYwMDAsImV4cCI6MjA3NDk4MjAwMH0.h6A0R1KwdtbgeWc3XslP3HZfTnNKGxeP7vdVEiJFPfM';
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const productsBody = document.getElementById('productsBody');
+      const statusFilter = document.getElementById('statusFilter');
+      const refreshBtn = document.getElementById('refreshBtn');
+      const newDraftBtn = document.getElementById('newDraftBtn');
+      const productForm = document.getElementById('productForm');
+      const consoleEl = document.getElementById('console');
+      const categorySelect = document.getElementById('categorySelect');
+      const nameInput = document.getElementById('nameInput');
+      const slugInput = document.getElementById('slugInput');
+      const currencyInput = document.getElementById('currencyInput');
+
+      const categoryForm = document.getElementById('categoryForm');
+      const categoriesList = document.getElementById('categoriesList');
+      const categoryNameInput = document.getElementById('categoryNameInput');
+      const categorySlugInput = document.getElementById('categorySlugInput');
+      const categoryDescriptionInput = document.getElementById('categoryDescriptionInput');
+      const categorySortInput = document.getElementById('categorySortInput');
+      const categoryIdInput = document.getElementById('categoryIdInput');
+      const resetCategoryBtn = document.getElementById('resetCategoryBtn');
+
+      const state = {
+        categories: [],
+        products: [],
+      };
+
+      function slugify(value) {
+        return value
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)+/g, '');
+      }
+
+      function formatCurrency(cents = 0, currency = 'INR') {
+        const upperCurrency = (currency || 'INR').toUpperCase();
+        const locale = upperCurrency === 'INR' ? 'en-IN' : 'en-US';
+        return new Intl.NumberFormat(locale, {
+          style: 'currency',
+          currency: upperCurrency,
+        }).format((cents ?? 0) / 100);
+      }
+
+      function log(message, type = 'success') {
+        const span = document.createElement('span');
+        span.className = type;
+        span.textContent = message;
+        consoleEl.prepend(span);
+        if (consoleEl.childNodes.length > 3) {
+          consoleEl.removeChild(consoleEl.lastChild);
+        }
+      }
+
+      async function loadCategories() {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name, slug, description, sort_order')
+          .order('name');
+
+        if (error) {
+          log(`Failed to load categories: ${error.message}`, 'error');
+          categorySelect.innerHTML = '<option value="">Error loading categories</option>';
+          return;
+        }
+
+        state.categories = data ?? [];
+
+        const previousValue = categorySelect.value;
+
+        categorySelect.innerHTML = '<option value="" disabled selected>Select a category</option>' +
+          state.categories
+            .map((cat) => `<option value="${cat.id}">${cat.name}</option>`)
+            .join('');
+
+        if (previousValue) {
+          categorySelect.value = previousValue;
+        } else {
+          categorySelect.value = '';
+        }
+
+        renderCategories();
+      }
+
+      function renderCategories() {
+        if (!categoriesList) {
+          return;
+        }
+
+        if (!state.categories.length) {
+          categoriesList.innerHTML = '<div class="empty-state">No categories yet.</div>';
+          return;
+        }
+
+        categoriesList.innerHTML = state.categories
+          .map((category) => `
+            <div class="category-item" data-id="${category.id}">
+              <div>
+                <h3>${category.name}</h3>
+                <div class="muted">/${category.slug}</div>
+                ${category.description ? `<div class="muted">${category.description}</div>` : ''}
+              </div>
+              <div class="category-meta">
+                <span class="muted">Sort: ${category.sort_order ?? 0}</span>
+                <div class="category-actions">
+                  <button class="btn ghost" data-action="edit-category" data-id="${category.id}">Edit</button>
+                </div>
+              </div>
+            </div>
+          `)
+          .join('');
+      }
+
+      async function loadProducts() {
+        productsBody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading…</td></tr>';
+
+        let query = supabase
+          .from('products')
+          .select('id, name, slug, description, category_id, price_cents, currency, stock_qty, status, created_at, image_url')
+          .order('created_at', { ascending: false });
+
+        if (statusFilter.value !== 'all') {
+          query = query.eq('status', statusFilter.value);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          log(`Failed to load products: ${error.message}`, 'error');
+          productsBody.innerHTML = '<tr><td colspan="6" class="empty-state">Error loading products.</td></tr>';
+          return;
+        }
+
+        state.products = data ?? [];
+        renderProducts();
+      }
+
+      function renderProducts() {
+        if (!state.products.length) {
+          productsBody.innerHTML = '<tr><td colspan="6" class="empty-state">No products found.</td></tr>';
+          return;
+        }
+
+        productsBody.innerHTML = state.products
+          .map((product) => {
+            const categoryName = state.categories.find((cat) => cat.id === product.category_id)?.name ?? '—';
+            return `
+              <tr data-id="${product.id}">
+                <td class="product-thumb">
+                  ${product.image_url ? `<img src="${product.image_url}" alt="${product.name}" />` : `<span class="fallback-thumb">NA</span>`}
+                </td>
+                <td>
+                  <div class="product-name">${product.name}</div>
+                  <div class="muted">Slug: ${product.slug}</div>
+                  <div class="muted">${product.description ?? ''}</div>
+                </td>
+                <td>
+                  <div>${categoryName}</div>
+                </td>
+                <td>
+                  <div>${formatCurrency(product.price_cents, product.currency)}</div>
+                  <div class="muted">Stock: ${product.stock_qty}</div>
+                </td>
+                <td>
+                  <span class="badge status-${product.status}">${product.status}</span>
+                </td>
+                <td>
+                  <div class="actions">
+                    <button class="btn ghost" data-action="set-status" data-status="active">Activate</button>
+                    <button class="btn ghost" data-action="set-status" data-status="draft">Draft</button>
+                    <button class="btn ghost" data-action="set-status" data-status="archived">Archive</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          })
+          .join('');
+      }
+
+      async function updateProductStatus(id, status) {
+        const { error } = await supabase
+          .from('products')
+          .update({ status })
+          .eq('id', id);
+
+        if (error) {
+          log(`Failed to update status: ${error.message}`, 'error');
+          return;
+        }
+
+        log('Status updated.');
+        await loadProducts();
+      }
+
+      productForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(productForm);
+
+        const payload = {
+          name: formData.get('name'),
+          slug: formData.get('slug'),
+          description: formData.get('description') || null,
+          category_id: formData.get('category') || null,
+          price_cents: Math.round(parseFloat(formData.get('price') || '0') * 100),
+          currency: (formData.get('currency') || 'INR').toUpperCase(),
+          inventory_sku: formData.get('sku') || null,
+          stock_qty: parseInt(formData.get('stock') || '0', 10),
+          status: formData.get('status') || 'draft',
+        };
+
+        const { error } = await supabase.from('products').upsert(payload, {
+          onConflict: 'slug',
+        });
+
+        if (error) {
+          log(`Save failed: ${error.message}`, 'error');
+          return;
+        }
+
+        log('Product saved.');
+        productForm.reset();
+        categorySelect.selectedIndex = 0;
+        currencyInput.value = 'INR';
+        document.getElementById('statusSelect').value = 'draft';
+        slugInput.dataset.touched = '';
+        await loadProducts();
+      });
+
+      productsBody.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-action="set-status"]');
+        if (!button) return;
+        const row = button.closest('tr');
+        if (!row) return;
+        updateProductStatus(row.dataset.id, button.dataset.status);
+      });
+
+      refreshBtn.addEventListener('click', () => {
+        loadProducts();
+      });
+
+      newDraftBtn.addEventListener('click', () => {
+        productForm.reset();
+        document.getElementById('statusSelect').value = 'draft';
+        currencyInput.value = 'INR';
+        categorySelect.value = '';
+        nameInput.focus();
+        slugInput.dataset.touched = '';
+        log('Ready to create a new draft.');
+      });
+
+      statusFilter.addEventListener('change', loadProducts);
+
+      nameInput.addEventListener('input', () => {
+        if (!slugInput.dataset.touched) {
+          slugInput.value = slugify(nameInput.value);
+        }
+      });
+
+      slugInput.addEventListener('input', () => {
+        slugInput.dataset.touched = 'true';
+      });
+
+      categoryNameInput.addEventListener('input', () => {
+        if (!categorySlugInput.dataset.touched) {
+          categorySlugInput.value = slugify(categoryNameInput.value);
+        }
+      });
+
+      categorySlugInput.addEventListener('input', () => {
+        categorySlugInput.dataset.touched = 'true';
+      });
+
+      function resetCategoryForm() {
+        categoryForm.reset();
+        categoryIdInput.value = '';
+        categorySortInput.value = '0';
+        categorySlugInput.dataset.touched = '';
+      }
+
+      resetCategoryBtn.addEventListener('click', () => {
+        resetCategoryForm();
+        categoryNameInput.focus();
+      });
+
+      categoryForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const categoryId = categoryIdInput.value;
+        const payload = {
+          name: categoryNameInput.value.trim(),
+          slug: categorySlugInput.value.trim(),
+          description: categoryDescriptionInput.value.trim() || null,
+          sort_order: parseInt(categorySortInput.value || '0', 10),
+        };
+
+        let error;
+
+        if (categoryId) {
+          ({ error } = await supabase
+            .from('categories')
+            .update(payload)
+            .eq('id', categoryId));
+        } else {
+          ({ error } = await supabase
+            .from('categories')
+            .insert(payload));
+        }
+
+        if (error) {
+          log(`Category save failed: ${error.message}`, 'error');
+          return;
+        }
+
+        log(`Category ${categoryId ? 'updated' : 'created'}.`);
+        resetCategoryForm();
+        await loadCategories();
+      });
+
+      categoriesList.addEventListener('click', (event) => {
+        const editBtn = event.target.closest('[data-action="edit-category"]');
+        if (!editBtn) {
+          return;
+        }
+        const category = state.categories.find((cat) => cat.id === editBtn.dataset.id);
+        if (!category) {
+          return;
+        }
+
+        categoryIdInput.value = category.id;
+        categoryNameInput.value = category.name ?? '';
+        categorySlugInput.value = category.slug ?? '';
+        categorySlugInput.dataset.touched = 'true';
+        categoryDescriptionInput.value = category.description ?? '';
+        categorySortInput.value = category.sort_order ?? 0;
+        log('Category loaded for editing.');
+        categoryNameInput.focus();
+      });
+
+      async function bootstrap() {
+        await loadCategories();
+        await loadProducts();
+      }
+
+      bootstrap();
+    </script>
+  </body>
+</html>
