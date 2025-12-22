@@ -29,8 +29,9 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   IconData _selectedIcon = Icons.star;
   Color _selectedColor = Colors.blue;
   HabitType _selectedHabitType = HabitType.build;
-  TimeOfDay? _reminderTime;
+  List<TimeOfDay> _reminderTimes = [];
   int _remindersPerDay = 1;
+
   final List<IconData> _availableIcons = [
     Icons.fitness_center,
     Icons.directions_run,
@@ -148,7 +149,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     _selectedIcon = habit.icon;
     _selectedColor = habit.color;
     _selectedHabitType = habit.habitType;
-    _reminderTime = habit.reminderTime;
+    _reminderTimes = List.from(habit.reminderTimes);
     _remindersPerDay = habit.remindersPerDay;
   }
 
@@ -163,21 +164,27 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final habitProvider = Provider.of<HabitProvider>(context, listen: false);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false); // Get AuthProvider
+    final authProvider =
+        Provider.of<AuthProvider>(context, listen: false); // Get AuthProvider
     final isEditing = widget.habitToEdit != null;
     final habitId = widget.habitToEdit?.id ?? _uuid.v4();
     final desiredName = _nameController.text.trim();
 
-    if (habitProvider.isHabitNameTaken(desiredName, excludeId: isEditing ? habitId : null)) {
+    if (habitProvider.isHabitNameTaken(desiredName,
+        excludeId: isEditing ? habitId : null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Habit name already exists. Choose a unique name.')),
+        const SnackBar(
+            content: Text('Habit name already exists. Choose a unique name.')),
       );
       return;
     }
-    final notificationId = habitId.hashCode;
-
-    // Reminder scheduling removed: the `reminderTime` will be persisted on the
-    // habit but no OS-level notifications are scheduled by the app.
+    // Ensure stored reminders list size matches remindersPerDay setting
+    List<TimeOfDay> validReminders = [];
+    if (_reminderTimes.length > _remindersPerDay) {
+      validReminders = _reminderTimes.sublist(0, _remindersPerDay);
+    } else {
+      validReminders = List.from(_reminderTimes);
+    }
 
     final habit = Habit(
       id: habitId,
@@ -190,18 +197,19 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       habitType: _selectedHabitType,
       createdAt: widget.habitToEdit?.createdAt ?? DateTime.now(),
       completedDates: widget.habitToEdit?.completedDates ?? [],
-      reminderTime: _reminderTime,
+      reminderTimes: validReminders,
       remindersPerDay: _remindersPerDay,
       dailyCompletions: widget.habitToEdit?.dailyCompletions ?? {},
     );
 
-    final isPremium = authProvider.currentUser?.premium ?? false; // Check premium status
+    final isPremium =
+        authProvider.currentUser?.premium ?? false; // Check premium status
 
     if (isEditing) {
       await habitProvider.updateHabit(habit.id, habit);
       // Reschedule or cancel habit reminder after update
       try {
-        if (habit.reminderTime != null) {
+        if (habit.reminderTimes.isNotEmpty) {
           await NotificationService().scheduleReminderForHabit(habit);
         } else {
           await NotificationService().cancelReminder(habit.id.hashCode);
@@ -210,10 +218,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         debugPrint('⚠️ Failed to (re)schedule notification: $e');
       }
     } else {
-      await habitProvider.addHabit(habit, isPremium: isPremium); // Pass premium status
+      await habitProvider.addHabit(habit,
+          isPremium: isPremium); // Pass premium status
       // Schedule reminder for newly created habit (if set)
       try {
-        if (habit.reminderTime != null) await NotificationService().scheduleReminderForHabit(habit);
+        if (habit.reminderTimes.isNotEmpty) {
+          await NotificationService().scheduleReminderForHabit(habit);
+        }
       } catch (e) {
         debugPrint('⚠️ Failed to schedule notification for new habit: $e');
       }
@@ -245,7 +256,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.habitToEdit != null ? 'Edit Habit' : 'Add New Habit'),
+        title:
+            Text(widget.habitToEdit != null ? 'Edit Habit' : 'Add New Habit'),
       ),
       body: Form(
         key: _formKey,
@@ -262,12 +274,14 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               const SizedBox(height: 24),
               _buildHabitTypeSelection(),
               const SizedBox(height: 24),
-              _buildReminderSection(),
-              const SizedBox(height: 24),
               _buildRemindersPerDaySection(),
+              const SizedBox(height: 24),
+              _buildReminderSection(),
               const SizedBox(height: 48),
               ModernButton(
-                text: widget.habitToEdit != null ? 'Update Habit' : 'Create Habit',
+                text: widget.habitToEdit != null
+                    ? 'Update Habit'
+                    : 'Create Habit',
                 type: ModernButtonType.primary,
                 size: ModernButtonSize.large,
                 icon: widget.habitToEdit != null ? Icons.update : Icons.add,
@@ -288,8 +302,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         Text(
           'Basic Information',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 16),
         _buildTextFieldCard(
@@ -328,8 +342,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         Text(
           'Choose an Icon',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 12),
         Container(
@@ -338,7 +352,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha((0.2 * 255).round())),
+            border: Border.all(
+                color: Theme.of(context)
+                    .colorScheme
+                    .outline
+                    .withAlpha((0.2 * 255).round())),
           ),
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
@@ -359,20 +377,28 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     height: 56,
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                        color: isSelected
-                          ? Theme.of(context).colorScheme.primary.withAlpha((0.18 * 255).round())
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: isSelected
+                          ? Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withAlpha((0.18 * 255).round())
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.white.withAlpha((0.06 * 255).round()),
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.white.withAlpha((0.06 * 255).round()),
                         width: isSelected ? 2 : 1,
                       ),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: Theme.of(context).colorScheme.primary.withAlpha((0.35 * 255).round()),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withAlpha((0.35 * 255).round()),
                                 blurRadius: 16,
                                 offset: const Offset(0, 8),
                               ),
@@ -382,16 +408,21 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: isSelected
-                          ? Theme.of(context).colorScheme.primary.withAlpha((0.25 * 255).round())
-                          : Theme.of(context).colorScheme.surfaceContainerHigh,
+                            ? Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withAlpha((0.25 * 255).round())
+                            : Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         icon,
                         size: 24,
                         color: isSelected
-                          ? Colors.white
-                          : Colors.white.withAlpha((0.7 * 255).round()),
+                            ? Colors.white
+                            : Colors.white.withAlpha((0.7 * 255).round()),
                       ),
                     ),
                   ),
@@ -411,8 +442,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         Text(
           'Choose a Color',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 12),
         Container(
@@ -421,7 +452,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha((0.2 * 255).round())),
+            border: Border.all(
+                color: Theme.of(context)
+                    .colorScheme
+                    .outline
+                    .withAlpha((0.2 * 255).round())),
           ),
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
@@ -442,14 +477,19 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     height: 52,
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                        color: isSelected
-                          ? Theme.of(context).colorScheme.primary.withAlpha((0.2 * 255).round())
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: isSelected
+                          ? Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withAlpha((0.2 * 255).round())
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.white.withAlpha((0.06 * 255).round()),
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.white.withAlpha((0.06 * 255).round()),
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -483,8 +523,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         Text(
           'Habit Type',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 12),
         Container(
@@ -493,7 +533,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+            border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
           ),
           child: Row(
             children: HabitType.values.map((habitType) {
@@ -513,8 +554,12 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? (isBuild ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2))
-                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                            ? (isBuild
+                                ? Colors.green.withOpacity(0.2)
+                                : Colors.red.withOpacity(0.2))
+                            : Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected
@@ -525,7 +570,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: (isBuild ? Colors.green : Colors.red).withOpacity(0.25),
+                                  color: (isBuild ? Colors.green : Colors.red)
+                                      .withOpacity(0.25),
                                   blurRadius: 14,
                                   offset: const Offset(0, 6),
                                 ),
@@ -545,22 +591,30 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                           Text(
                             _getHabitTypeLabel(habitType),
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
                                   color: isSelected
                                       ? Colors.white
                                       : Colors.white.withOpacity(0.7),
-                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
                                 ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            isBuild ? 'Good habits to build' : 'Bad habits to break',
+                            isBuild
+                                ? 'Good habits to build'
+                                : 'Bad habits to break',
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: isSelected
-                                      ? Colors.white.withOpacity(0.8)
-                                      : Colors.white.withOpacity(0.5),
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: isSelected
+                                          ? Colors.white.withOpacity(0.8)
+                                          : Colors.white.withOpacity(0.5),
+                                    ),
                           ),
                         ],
                       ),
@@ -580,40 +634,66 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Reminder',
+          'Reminders',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 12),
-        ListTile(
-          title: Text(_reminderTime != null
-              ? 'Remind me at ${_reminderTime!.format(context)}'
-              : 'No reminder set'),
-          subtitle: const Text('Tap to set a reminder time'),
-          leading: const Icon(Icons.notifications),
-          trailing: _reminderTime != null
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
+        if (_remindersPerDay == 0)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              'No reminders enabled.',
+              style: TextStyle(color: Theme.of(context).colorScheme.outline),
+            ),
+          )
+        else
+          ...List.generate(_remindersPerDay, (index) {
+            final time =
+                (index < _reminderTimes.length) ? _reminderTimes[index] : null;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: ListTile(
+                tileColor: Theme.of(context).cardColor,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                title: Text(time != null
+                    ? 'Reminder ${index + 1}: ${time.format(context)}'
+                    : 'Set Reminder ${index + 1}'),
+                subtitle: Text(time == null ? 'Tap to set time' : ''),
+                leading: const Icon(Icons.notifications),
+                trailing: time != null
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 20),
+                        onPressed: () {
+                          setState(() {
+                            _reminderTimes.removeAt(index);
+                          });
+                        },
+                      )
+                    : null,
+                onTap: () async {
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime: time ?? TimeOfDay.now(),
+                  );
+                  if (picked != null) {
                     setState(() {
-                      _reminderTime = null;
+                      if (index < _reminderTimes.length) {
+                        _reminderTimes[index] = picked;
+                      } else {
+                        _reminderTimes.add(picked);
+                      }
+                      _reminderTimes.sort((a, b) => (a.hour * 60 + a.minute)
+                          .compareTo(b.hour * 60 + b.minute));
                     });
-                  },
-                )
-              : null,
-          onTap: () async {
-            final time = await showTimePicker(
-              context: context,
-              initialTime: _reminderTime ?? TimeOfDay.now(),
+                  }
+                },
+              ),
             );
-            if (time != null) {
-              setState(() {
-                _reminderTime = time;
-              });
-            }
-          },
-        ),
+          }),
       ],
     );
   }
@@ -634,14 +714,16 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         Text(
           'Reminders Per Day',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
+            color: Theme.of(context).cardColor,
+            border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -651,17 +733,17 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Daily Reminders',
+                    'Daily Frequency',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
+                          fontWeight: FontWeight.w500,
+                        ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'How many times per day?',
+                    'Set habit completions per day',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                   ),
                 ],
               ),
@@ -672,6 +754,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                         ? () {
                             setState(() {
                               _remindersPerDay--;
+                              // No need to clear _reminderTimes immediately to be non-destructive
                             });
                           }
                         : null,
@@ -682,16 +765,20 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
                       child: Text(
                         '$_remindersPerDay',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                       ),
                     ),
                   ),
@@ -729,7 +816,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha((0.2 * 255).round())),
+        border: Border.all(
+            color: Theme.of(context)
+                .colorScheme
+                .outline
+                .withAlpha((0.2 * 255).round())),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -746,7 +837,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Theme.of(context).colorScheme.outline.withAlpha((0.2 * 255).round())),
+              border: Border.all(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outline
+                      .withAlpha((0.2 * 255).round())),
             ),
             child: TextFormField(
               controller: controller,
@@ -757,7 +852,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               ),
               decoration: InputDecoration(
                 hintText: hint,
-                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                hintStyle: theme.textTheme.bodyMedium?.copyWith(
                   color: Colors.white.withAlpha((0.5 * 255).round()),
                 ),
                 border: InputBorder.none,

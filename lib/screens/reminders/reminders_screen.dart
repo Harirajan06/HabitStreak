@@ -24,11 +24,15 @@ class RemindersScreen extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withAlpha((0.18 * 255).toInt()),
+                color:
+                    theme.colorScheme.primary.withAlpha((0.18 * 255).toInt()),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: theme.colorScheme.outline.withAlpha((0.2 * 255).toInt())),
+                border: Border.all(
+                    color: theme.colorScheme.outline
+                        .withAlpha((0.2 * 255).toInt())),
               ),
-              child: Icon(Icons.notifications, color: theme.colorScheme.primary),
+              child:
+                  Icon(Icons.notifications, color: theme.colorScheme.primary),
             ),
             const SizedBox(width: 12),
             Text(
@@ -65,7 +69,9 @@ class RemindersScreen extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: theme.cardColor,
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: theme.colorScheme.outline.withAlpha((0.2 * 255).toInt())),
+                              border: Border.all(
+                                  color: theme.colorScheme.outline
+                                      .withAlpha((0.2 * 255).toInt())),
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -73,7 +79,8 @@ class RemindersScreen extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withAlpha((0.16 * 255).toInt()),
+                                    color: theme.colorScheme.primary
+                                        .withAlpha((0.16 * 255).toInt()),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Icon(
@@ -86,17 +93,18 @@ class RemindersScreen extends StatelessWidget {
                                 Text(
                                   'All caught up!',
                                   style: theme.textTheme.titleLarge?.copyWith(
-                                        color: theme.colorScheme.onSurface,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                    color: theme.colorScheme.onSurface,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   'No upcoming reminders for today',
                                   textAlign: TextAlign.center,
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                        color: theme.colorScheme.onSurface.withAlpha((0.6 * 255).toInt()),
-                                      ),
+                                    color: theme.colorScheme.onSurface
+                                        .withAlpha((0.6 * 255).toInt()),
+                                  ),
                                 ),
                               ],
                             ),
@@ -112,26 +120,32 @@ class RemindersScreen extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: theme.cardColor,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: theme.colorScheme.outline.withAlpha((0.2 * 255).toInt())),
+                                border: Border.all(
+                                    color: theme.colorScheme.outline
+                                        .withAlpha((0.2 * 255).toInt())),
                               ),
                               child: Row(
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: habit.color.withAlpha((0.18 * 255).toInt()),
+                                      color: habit.color
+                                          .withAlpha((0.18 * 255).toInt()),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: Icon(habit.icon, color: habit.color, size: 24),
+                                    child: Icon(habit.icon,
+                                        color: habit.color, size: 24),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           habit.name,
-                                          style: theme.textTheme.titleMedium?.copyWith(
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
                                             fontWeight: FontWeight.w700,
                                             color: theme.colorScheme.onSurface,
                                           ),
@@ -139,17 +153,31 @@ class RemindersScreen extends StatelessWidget {
                                         const SizedBox(height: 4),
                                         Row(
                                           children: [
-                                            Text(
-                                              _formatReminderTime(habit.reminderTime),
-                                              style: theme.textTheme.bodySmall?.copyWith(
-                                                color: theme.colorScheme.onSurface.withAlpha((0.6 * 255).toInt()),
+                                            Expanded(
+                                              child: Text(
+                                                _formatReminderTime(
+                                                    habit.reminderTimes),
+                                                style: theme.textTheme.bodySmall
+                                                    ?.copyWith(
+                                                  color: theme
+                                                      .colorScheme.onSurface
+                                                      .withAlpha(
+                                                          (0.6 * 255).toInt()),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
                                               ),
                                             ),
                                             const SizedBox(width: 8),
                                             Text(
-                                              _getTimeOfDayLabel(habit.timeOfDay),
-                                              style: theme.textTheme.bodySmall?.copyWith(
-                                                color: theme.colorScheme.onSurface.withAlpha((0.6 * 255).toInt()),
+                                              _getTimeOfDayLabel(
+                                                  habit.timeOfDay),
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                color: theme
+                                                    .colorScheme.onSurface
+                                                    .withAlpha(
+                                                        (0.6 * 255).toInt()),
                                               ),
                                             ),
                                           ],
@@ -160,17 +188,27 @@ class RemindersScreen extends StatelessWidget {
                                   Column(
                                     children: [
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 6),
                                         decoration: BoxDecoration(
                                           color: habit.isCompletedToday()
-                                              ? Colors.green.withAlpha((0.18 * 255).toInt())
-                                              : theme.colorScheme.primary.withAlpha((0.18 * 255).toInt()),
-                                          borderRadius: BorderRadius.circular(12),
+                                              ? Colors.green.withAlpha(
+                                                  (0.18 * 255).toInt())
+                                              : theme.colorScheme.primary
+                                                  .withAlpha(
+                                                      (0.18 * 255).toInt()),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
                                         child: Text(
-                                          habit.isCompletedToday() ? 'Done' : 'Pending',
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            color: habit.isCompletedToday() ? Colors.green : theme.colorScheme.primary,
+                                          habit.isCompletedToday()
+                                              ? 'Done'
+                                              : 'Pending',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: habit.isCompletedToday()
+                                                ? Colors.green
+                                                : theme.colorScheme.primary,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -178,32 +216,30 @@ class RemindersScreen extends StatelessWidget {
                                       const SizedBox(height: 8),
                                       PopupMenuButton<String>(
                                         onSelected: (value) async {
-                                          final provider = Provider.of<HabitProvider>(context, listen: false);
+                                          final provider =
+                                              Provider.of<HabitProvider>(
+                                                  context,
+                                                  listen: false);
                                           if (value == 'cancel') {
-                                            final updated = habit.copyWith(reminderTime: null);
-                                            await provider.updateHabit(habit.id, updated);
-                                            await NotificationService().cancelReminder(habit.id.hashCode);
+                                            final updated = habit
+                                                .copyWith(reminderTimes: []);
+                                            await provider.updateHabit(
+                                                habit.id, updated);
+                                            await NotificationService()
+                                                .cancelHabitReminders(habit.id);
                                             if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Reminder cancelled for ${habit.name}')));
-                                            }
-                                          } else if (value == 'reschedule') {
-                                            final picked = await showTimePicker(
-                                              context: context,
-                                              initialTime: habit.reminderTime ?? TimeOfDay.now(),
-                                            );
-                                            if (picked != null) {
-                                              final updated = habit.copyWith(reminderTime: picked);
-                                              await provider.updateHabit(habit.id, updated);
-                                              await NotificationService().scheduleReminderForHabit(updated);
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Reminder rescheduled for ${habit.name} at ${picked.format(context)}')));
-                                              }
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(SnackBar(
+                                                      content: Text(
+                                                          'Reminders cancelled for ${habit.name}')));
                                             }
                                           }
                                         },
                                         itemBuilder: (context) => [
-                                          const PopupMenuItem(value: 'reschedule', child: Text('Reschedule')),
-                                          const PopupMenuItem(value: 'cancel', child: Text('Cancel reminder')),
+                                          const PopupMenuItem(
+                                              value: 'cancel',
+                                              child:
+                                                  Text('Cancel all reminders')),
                                         ],
                                       ),
                                     ],
@@ -223,10 +259,11 @@ class RemindersScreen extends StatelessWidget {
   }
 
   List<Habit> _getUpcomingReminders(HabitProvider habitProvider) {
-  // Return habits that have a reminder set and are not completed today
-  return habitProvider.activeHabits
-    .where((habit) => habit.reminderTime != null && !habit.isCompletedToday())
-    .toList();
+    // Return habits that have a reminder set and are not completed today
+    return habitProvider.activeHabits
+        .where((habit) =>
+            habit.reminderTimes.isNotEmpty && !habit.isCompletedToday())
+        .toList();
   }
 
   String _getTimeOfDayLabel(HabitTimeOfDay timeOfDay) {
@@ -242,11 +279,13 @@ class RemindersScreen extends StatelessWidget {
     }
   }
 
-  String _formatReminderTime(TimeOfDay? time) {
-    if (time == null) return 'No time set';
+  String _formatReminderTime(List<TimeOfDay> times) {
+    if (times.isEmpty) return 'No time set';
     final now = DateTime.now();
-    final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
-    return DateFormat.jm().format(dt);
+    return times.map((time) {
+      final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+      return DateFormat.jm().format(dt);
+    }).join(', ');
   }
 
   int _normalizeId(int id) => id & 0x7fffffff;
@@ -280,7 +319,8 @@ class RemindersScreen extends StatelessWidget {
                       final req = pending[index];
                       Habit? matchedHabit;
                       try {
-                        matchedHabit = provider.habits.firstWhere((h) => _normalizeId(h.id.hashCode) == req.id);
+                        matchedHabit = provider.habits.firstWhere(
+                            (h) => _normalizeId(h.id.hashCode) == req.id);
                       } catch (e) {
                         matchedHabit = null;
                       }
@@ -305,11 +345,16 @@ class RemindersScreen extends StatelessWidget {
                               onPressed: () async {
                                 await service.cancelReminder(req.id);
                                 if (matchedHabit != null) {
-                                  final updated = matchedHabit.copyWith(reminderTime: null);
-                                  await provider.updateHabit(matchedHabit.id, updated);
+                                  final updated =
+                                      matchedHabit.copyWith(reminderTimes: []);
+                                  await provider.updateHabit(
+                                      matchedHabit.id, updated);
                                 }
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Cancelled reminder ${req.title ?? ''}')));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Cancelled reminder ${req.title ?? ''}')));
                                 }
                                 Navigator.of(context).pop();
                               },

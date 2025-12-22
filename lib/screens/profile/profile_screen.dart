@@ -27,7 +27,8 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
+        backgroundColor:
+            theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
         elevation: 0,
         title: Text(
           'Profile',
@@ -240,7 +241,8 @@ class ProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outline.withAlpha((0.2 * 255).round())),
+        border: Border.all(
+            color: theme.colorScheme.outline.withAlpha((0.2 * 255).round())),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -439,7 +441,8 @@ class ProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
-         border: Border.all(color: theme.colorScheme.outline.withAlpha((0.2 * 255).round())),
+        border: Border.all(
+            color: theme.colorScheme.outline.withAlpha((0.2 * 255).round())),
       ),
       child: Column(children: children),
     );
@@ -487,7 +490,8 @@ class ProfileScreen extends StatelessWidget {
                   Text(
                     subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withAlpha((0.6 * 255).round()),
+                      color: theme.colorScheme.onSurface
+                          .withAlpha((0.6 * 255).round()),
                     ),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
@@ -498,7 +502,8 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(width: 8),
             trailing ??
                 Icon(Icons.chevron_right,
-                    color: theme.colorScheme.onSurface.withAlpha((0.4 * 255).round())),
+                    color: theme.colorScheme.onSurface
+                        .withAlpha((0.4 * 255).round())),
           ],
         ),
       ),
@@ -531,7 +536,8 @@ class ProfileScreen extends StatelessWidget {
               'Enjoying Streakly? Share it with your friends and help them build great habits too!',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha((0.7 * 255).round()),
+                color:
+                    theme.colorScheme.onSurface.withAlpha((0.7 * 255).round()),
               ),
             ),
           ],
@@ -952,7 +958,8 @@ class ProfileScreen extends StatelessWidget {
             child: Text(
               'Cancel',
               style: TextStyle(
-                  color: theme.colorScheme.onSurface.withAlpha((0.6 * 255).round())),
+                  color: theme.colorScheme.onSurface
+                      .withAlpha((0.6 * 255).round())),
             ),
           ),
           FilledButton(
@@ -963,7 +970,8 @@ class ProfileScreen extends StatelessWidget {
               if (email.isEmpty || !email.contains('@')) {
                 final messenger = ScaffoldMessenger.of(context);
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('Please enter a valid email address')),
+                  const SnackBar(
+                      content: Text('Please enter a valid email address')),
                 );
                 return;
               }
@@ -980,7 +988,8 @@ class ProfileScreen extends StatelessWidget {
               final Uri emailUri = Uri(
                 scheme: 'mailto',
                 path: 'habitmakerc@gmail.com',
-                query: 'subject=Streakly Support Request&body=${Uri.encodeComponent(message)}\n\nFrom: $email',
+                query:
+                    'subject=Streakly Support Request&body=${Uri.encodeComponent(message)}\n\nFrom: $email',
               );
 
               final navigator = Navigator.of(context);
@@ -998,7 +1007,8 @@ class ProfileScreen extends StatelessWidget {
               } catch (_) {
                 messenger.showSnackBar(
                   const SnackBar(
-                    content: Text('Could not open email client. Please send your message to habitmakerc@gmail.com'),
+                    content: Text(
+                        'Could not open email client. Please send your message to habitmakerc@gmail.com'),
                     duration: Duration(seconds: 4),
                   ),
                 );
@@ -1040,10 +1050,12 @@ class ProfileScreen extends StatelessWidget {
                   child: ModernButton(
                     text: 'Sign Out',
                     type: ModernButtonType.destructive,
-                      onPressed: () {
-                      Provider.of<AuthProvider>(context, listen: false).logout();
+                    onPressed: () {
+                      Provider.of<AuthProvider>(context, listen: false)
+                          .logout();
                       Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const MainNavigation()),
+                        MaterialPageRoute(
+                            builder: (_) => const MainNavigation()),
                         (route) => false,
                       );
                     },
@@ -1056,8 +1068,6 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-
-  
 
   void _showBackupDialog(BuildContext context) {
     final theme = Theme.of(context);
@@ -1079,15 +1089,18 @@ class ProfileScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withAlpha((0.12 * 255).round()),
+                        color: theme.colorScheme.primary
+                            .withAlpha((0.12 * 255).round()),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(Icons.cloud_sync, color: theme.colorScheme.primary),
+                      child: Icon(Icons.cloud_sync,
+                          color: theme.colorScheme.primary),
                     ),
                     const SizedBox(width: 12),
                     Text(
                       'Backup Data',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
@@ -1095,7 +1108,8 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   'Quickly export your data or restore from a saved JSON backup.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withAlpha((0.7 * 255).round()),
+                    color: theme.colorScheme.onSurface
+                        .withAlpha((0.7 * 255).round()),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -1110,7 +1124,8 @@ class ProfileScreen extends StatelessWidget {
                     child: const Icon(Icons.ios_share, color: Colors.green),
                   ),
                   title: const Text('Share Backup'),
-                  subtitle: const Text('Send the JSON export via mail, chat, or cloud drive'),
+                  subtitle: const Text(
+                      'Send the JSON export via mail, chat, or cloud drive'),
                   onTap: () => _handleExportShare(context, sheetContext),
                 ),
                 const SizedBox(height: 8),
@@ -1125,7 +1140,8 @@ class ProfileScreen extends StatelessWidget {
                     child: const Icon(Icons.save_alt, color: Colors.blueAccent),
                   ),
                   title: const Text('Save to Device'),
-                  subtitle: const Text('Store a copy inside the app documents folder'),
+                  subtitle: const Text(
+                      'Store a copy inside the app documents folder'),
                   onTap: () => _handleExportSave(context, sheetContext),
                 ),
                 const SizedBox(height: 8),
@@ -1137,10 +1153,12 @@ class ProfileScreen extends StatelessWidget {
                       color: Color(0xFF9B5DE5).withAlpha((0.16 * 255).round()),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.upload_file, color: Color(0xFF9B5DE5)),
+                    child:
+                        const Icon(Icons.upload_file, color: Color(0xFF9B5DE5)),
                   ),
                   title: const Text('Import Backup'),
-                  subtitle: const Text('Restore from a JSON file exported from Streakly'),
+                  subtitle: const Text(
+                      'Restore from a JSON file exported from Streakly'),
                   onTap: () => _handleImport(context, sheetContext),
                 ),
               ],
@@ -1151,13 +1169,15 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _handleExportShare(BuildContext context, BuildContext sheetContext) async {
+  Future<void> _handleExportShare(
+      BuildContext context, BuildContext sheetContext) async {
     Navigator.of(sheetContext).pop();
     final messenger = ScaffoldMessenger.of(context);
     try {
       await ExportImportService.instance.shareExport();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Opening share sheet with your backup...')),
+        const SnackBar(
+            content: Text('Opening share sheet with your backup...')),
       );
     } catch (e) {
       messenger.showSnackBar(
@@ -1169,7 +1189,8 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _handleExportSave(BuildContext context, BuildContext sheetContext) async {
+  Future<void> _handleExportSave(
+      BuildContext context, BuildContext sheetContext) async {
     Navigator.of(sheetContext).pop();
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -1186,7 +1207,9 @@ class ProfileScreen extends StatelessWidget {
       );
     }
   }
-  Future<void> _handleImport(BuildContext context, BuildContext sheetContext) async {
+
+  Future<void> _handleImport(
+      BuildContext context, BuildContext sheetContext) async {
     Navigator.of(sheetContext).pop();
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -1242,7 +1265,8 @@ class ProfileScreen extends StatelessWidget {
       } else {
         messenger.showSnackBar(
           SnackBar(
-            content: Text('Import failed: ${resultMap['error']} (backup: ${resultMap['backup']})'),
+            content: Text(
+                'Import failed: ${resultMap['error']} (backup: ${resultMap['backup']})'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -1319,7 +1343,7 @@ class ProfileScreen extends StatelessWidget {
               subtitle: Consumer<HabitProvider>(
                 builder: (context, habitProvider, child) {
                   final habitsWithReminders = habitProvider.activeHabits
-                      .where((h) => h.reminderTime != null)
+                      .where((h) => h.reminderTimes.isNotEmpty)
                       .length;
                   return Text(
                       '$habitsWithReminders habit(s) have reminders set');

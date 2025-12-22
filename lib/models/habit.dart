@@ -18,7 +18,7 @@ class Habit {
   final DateTime createdAt;
   final List<DateTime> completedDates;
   final bool isActive;
-  final TimeOfDay? reminderTime;
+  final List<TimeOfDay> reminderTimes;
   final int remindersPerDay;
   final Map<String, int> dailyCompletions; // date string -> completion count
   final bool? isTemporary;
@@ -35,7 +35,7 @@ class Habit {
     required this.createdAt,
     required this.completedDates,
     this.isActive = true,
-    this.reminderTime,
+    this.reminderTimes = const [],
     this.remindersPerDay = 1,
     this.dailyCompletions = const {},
     this.isTemporary,
@@ -175,6 +175,23 @@ class Habit {
         date1.day == date2.day;
   }
 
+  Map<String, dynamic> toWidgetJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'icon': icon.codePoint,
+      'color': color.value,
+      'currentStreak': currentStreak,
+      'isCompletedToday': isCompletedToday(),
+      'remindersPerDay': remindersPerDay,
+      'dailyCompletions': getTodayCompletionCount(),
+      'progressPercent': remindersPerDay > 0
+          ? (getTodayCompletionCount() / remindersPerDay).clamp(0.0, 1.0)
+          : 0.0,
+    };
+  }
+
   Habit copyWith({
     String? id,
     String? name,
@@ -187,7 +204,7 @@ class Habit {
     DateTime? createdAt,
     List<DateTime>? completedDates,
     bool? isActive,
-    TimeOfDay? reminderTime,
+    List<TimeOfDay>? reminderTimes,
     int? remindersPerDay,
     Map<String, int>? dailyCompletions,
     bool? isTemporary,
@@ -204,7 +221,7 @@ class Habit {
       createdAt: createdAt ?? this.createdAt,
       completedDates: completedDates ?? this.completedDates,
       isActive: isActive ?? this.isActive,
-      reminderTime: reminderTime ?? this.reminderTime,
+      reminderTimes: reminderTimes ?? this.reminderTimes,
       remindersPerDay: remindersPerDay ?? this.remindersPerDay,
       dailyCompletions: dailyCompletions ?? this.dailyCompletions,
       isTemporary: isTemporary ?? this.isTemporary,
@@ -225,33 +242,32 @@ class Habit {
       'completedDates':
           completedDates.map((date) => date.millisecondsSinceEpoch).toList(),
       'isActive': isActive,
-      'reminderTime': reminderTime != null
-          ? {'hour': reminderTime!.hour, 'minute': reminderTime!.minute}
-          : null,
+      'reminderTimes': reminderTimes
+          .map((t) => {'hour': t.hour, 'minute': t.minute})
+          .toList(),
       'remindersPerDay': remindersPerDay,
       'dailyCompletions': dailyCompletions,
       'isTemporary': isTemporary,
     };
   }
 
-  Map<String, dynamic> toWidgetJson() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'icon': icon.codePoint,
-      'color': color.value,
-      'currentStreak': currentStreak,
-      'isCompletedToday': isCompletedToday(),
-      'remindersPerDay': remindersPerDay,
-      'dailyCompletions': getTodayCompletionCount(),
-      'progressPercent': remindersPerDay > 0
-          ? (getTodayCompletionCount() / remindersPerDay).clamp(0.0, 1.0)
-          : 0.0,
-    };
-  }
+  // ... (keep toWidgetJson same or update if needed? Widget doesn't seem to use reminderTime)
 
   factory Habit.fromJson(Map<String, dynamic> json) {
+    // Migration: Check for old single 'reminderTime'
+    List<TimeOfDay> reminders = [];
+    if (json['reminderTimes'] != null) {
+      reminders = (json['reminderTimes'] as List)
+          .map((t) => TimeOfDay(hour: t['hour'], minute: t['minute']))
+          .toList();
+    } else if (json['reminderTime'] != null) {
+      // Backward compatibility
+      reminders.add(TimeOfDay(
+        hour: json['reminderTime']['hour'],
+        minute: json['reminderTime']['minute'],
+      ));
+    }
+
     return Habit(
       id: json['id'],
       name: json['name'],
@@ -266,12 +282,7 @@ class Habit {
           .map((timestamp) => DateTime.fromMillisecondsSinceEpoch(timestamp))
           .toList(),
       isActive: json['isActive'] ?? true,
-      reminderTime: json['reminderTime'] != null
-          ? TimeOfDay(
-              hour: json['reminderTime']['hour'],
-              minute: json['reminderTime']['minute'],
-            )
-          : null,
+      reminderTimes: reminders,
       remindersPerDay: json['remindersPerDay'] ?? 1,
       dailyCompletions: Map<String, int>.from(json['dailyCompletions'] ?? {}),
       isTemporary: json['isTemporary'],

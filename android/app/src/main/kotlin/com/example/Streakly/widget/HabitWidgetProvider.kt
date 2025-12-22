@@ -63,25 +63,38 @@ class HabitWidgetProvider : AppWidgetProvider() {
                     val name = habitData.optString("name", "Habit")
                     val streak = habitData.optInt("currentStreak", 0)
                     val isCompleted = habitData.optBoolean("isCompletedToday", false)
-                    val color = habitData.optInt("color", -1) // Default -1 or 0
-                    
+                    val color = habitData.optInt("color", -1)
+                    val iconBase64 = habitData.optString("iconBase64", "")
+
                     views.setTextViewText(R.id.tv_habit_name, name)
                     views.setTextViewText(R.id.tv_habit_status, "$streak day streak")
                     
                     // Apply Color to Ring
+                    // Logic: If NOT completed -> GRAY. If completed -> Habit Color.
                     if (color != -1 && color != 0) {
-                         // Use setInt to call setColorFilter on the ImageView
-                         views.setInt(R.id.img_ring, "setColorFilter", color)
+                        if (isCompleted) {
+                             views.setInt(R.id.img_ring, "setColorFilter", color)
+                        } else {
+                             // Use Gray for incomplete state
+                             views.setInt(R.id.img_ring, "setColorFilter", android.graphics.Color.parseColor("#444444"))
+                        }
                     }
 
-                    // Update visual state based on completion
-                    if (isCompleted) {
-                        // Keep the color but maybe show a checkmark overlay
-                        views.setViewVisibility(R.id.btn_complete_icon, android.view.View.VISIBLE)
-                        views.setImageViewResource(R.id.btn_complete_icon, android.R.drawable.checkbox_on_background)
-                        // Optional: Tint the checkmark to match or white
+                    // Set Icon
+                    if (iconBase64.isNotEmpty()) {
+                        try {
+                            val decodedBytes = android.util.Base64.decode(iconBase64, android.util.Base64.DEFAULT)
+                            val bitmap = android.graphics.BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                            views.setImageViewBitmap(R.id.btn_complete_icon, bitmap)
+                            views.setViewVisibility(R.id.btn_complete_icon, android.view.View.VISIBLE)
+                            
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            views.setViewVisibility(R.id.btn_complete_icon, android.view.View.GONE)
+                        }
                     } else {
-                        views.setViewVisibility(R.id.btn_complete_icon, android.view.View.GONE)
+                        // Fallback if no icon
+                         views.setViewVisibility(R.id.btn_complete_icon, android.view.View.GONE)
                     }
                 } else {
                     views.setTextViewText(R.id.tv_habit_name, "Error loading")

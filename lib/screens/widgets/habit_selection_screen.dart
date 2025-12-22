@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/habit_provider.dart';
+import 'package:flutter/services.dart';
 import '../../services/widget_service.dart';
 
 class HabitSelectionScreen extends StatelessWidget {
@@ -26,8 +27,7 @@ class HabitSelectionScreen extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () {
                       // Finish with empty to cancel/exit
-                      WidgetService()
-                          .finishWithSelectedHabit(appWidgetId, '', {});
+                      SystemNavigator.pop();
                       // If we are deep in nav, maybe we shouldn't pop app?
                       // Native side will finish activity.
                     },
@@ -54,7 +54,7 @@ class HabitSelectionScreen extends StatelessWidget {
                   await WidgetService().finishWithSelectedHabit(
                     appWidgetId,
                     habit.id,
-                    habit.toMap(),
+                    habit,
                   );
                   // The native activity will finish, which should bring us back?
                   // Actually, WidgetConfigureActivity launched MainActivity.

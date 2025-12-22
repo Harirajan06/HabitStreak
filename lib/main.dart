@@ -159,7 +159,9 @@ class _StreaklyLogicWrapperState extends State<StreaklyLogicWrapper>
       // Delay slightly to ensure provider is ready if needed, though usually safe immediately
       Future.delayed(Duration.zero, () {
         if (mounted) {
-          Provider.of<HabitProvider>(context, listen: false).loadHabits();
+          debugPrint("App Resumed - Syncing Widget Actions immediately");
+          Provider.of<HabitProvider>(context, listen: false)
+              .syncWidgetActions();
         }
       });
     }

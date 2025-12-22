@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import '../models/habit.dart';
+import '../utils/icon_renderer.dart';
 
 class WidgetService {
   static const MethodChannel _channel =
@@ -18,12 +19,32 @@ class WidgetService {
     });
   }
 
+  /// Helper to add icon image data to the habit JSON
+  Future<Map<String, dynamic>> _enrichHabitData(Habit habit) async {
+    final Map<String, dynamic> data = habit.toWidgetJson();
+    try {
+      final Uint8List? iconBytes = await IconRenderer.renderIconToPng(
+        habit.icon,
+        habit.color,
+        size: 100, // Reasonable resolution for widget
+      );
+
+      if (iconBytes != null) {
+        data['iconBase64'] = base64Encode(iconBytes);
+      }
+    } catch (e) {
+      debugPrint('Error rendering icon for widget: $e');
+    }
+    return data;
+  }
+
   /// Set the mapping for a specific widget instance to a habit
   Future<void> setWidgetMapping(int appWidgetId, Habit habit) async {
     try {
+      final enrichedData = await _enrichHabitData(habit);
       await _channel.invokeMethod('setWidgetMapping', {
         'appWidgetId': appWidgetId,
-        'habit': jsonEncode(habit.toWidgetJson()),
+        'habit': jsonEncode(enrichedData),
       });
     } catch (e) {
       print('Failed to set widget mapping: $e');
@@ -33,9 +54,10 @@ class WidgetService {
   /// Update all widgets mapped to this habit
   Future<void> updateWidgetForHabit(Habit habit) async {
     try {
+      final enrichedData = await _enrichHabitData(habit);
       await _channel.invokeMethod('updateWidgetForHabit', {
         'habitId': habit.id,
-        'habit': jsonEncode(habit.toWidgetJson()),
+        'habit': jsonEncode(enrichedData),
       });
     } catch (e) {
       print('Failed to update widget for habit: $e');
@@ -87,11 +109,12 @@ class WidgetService {
 
   /// Finish widget configuration with selected habit
   Future<void> finishWithSelectedHabit(
-      int appWidgetId, String habitId, Map<String, dynamic> habitData) async {
+      int appWidgetId, String habitId, Habit habit) async {
     try {
+      final enrichedData = await _enrichHabitData(habit);
       await _channel.invokeMethod('finishWithSelectedHabit', {
-        'habitId': habitId,
-        'habit': jsonEncode(habitData),
+        'habitId': habit.id,
+        'habit': jsonEncode(enrichedData),
         'appWidgetId': appWidgetId,
       });
     } catch (e) {

@@ -10,21 +10,25 @@ import '../models/habit.dart';
 
 class NotificationService {
   NotificationService._privateConstructor();
-  static final NotificationService _instance = NotificationService._privateConstructor();
+  static final NotificationService _instance =
+      NotificationService._privateConstructor();
   factory NotificationService() => _instance;
 
-  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
 
   static const String _channelId = 'streakly_daily_channel';
   static const String _channelName = 'Streakly Reminders';
-  static const String _channelDescription = 'Daily habit reminders from Streakly';
+  static const String _channelDescription =
+      'Daily habit reminders from Streakly';
 
   Future<void> initNotifications() async {
     try {
       const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
       const iosInit = DarwinInitializationSettings();
 
-      const initSettings = InitializationSettings(android: androidInit, iOS: iosInit);
+      const initSettings =
+          InitializationSettings(android: androidInit, iOS: iosInit);
 
       await _plugin.initialize(initSettings);
 
@@ -60,31 +64,35 @@ class NotificationService {
       );
 
       await _plugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(androidChannel);
 
-        // Request platform permissions:
-        // - iOS: request via plugin
-        // - Android 13+: request notification runtime permission via plugin
-        // - Android exact alarms: optionally request exact alarm permission so user is prompted
-        // Request notification permissions and, on Android, prompt for exact alarm permission.
-        await _requestPermissions();
-        await _requestAndroidPermissions(requestExactAlarm: true);
+      // Request platform permissions:
+      // - iOS: request via plugin
+      // - Android 13+: request notification runtime permission via plugin
+      // - Android exact alarms: optionally request exact alarm permission so user is prompted
+      // Request notification permissions and, on Android, prompt for exact alarm permission.
+      await _requestPermissions();
+      await _requestAndroidPermissions(requestExactAlarm: true);
       debugPrint('✅ NotificationService initialized');
     } catch (e) {
       debugPrint('❌ Error initializing notifications: $e');
     }
   }
 
-  Future<void> _requestAndroidPermissions({bool requestExactAlarm = false}) async {
+  Future<void> _requestAndroidPermissions(
+      {bool requestExactAlarm = false}) async {
     try {
-      final androidImpl = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final androidImpl = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
       // Request the runtime notification permission on Android 13+
       try {
         await androidImpl?.requestNotificationsPermission();
         debugPrint('✅ Requested Android notification permission');
       } catch (e) {
-        debugPrint('⚠️ Android notification permission request not available: $e');
+        debugPrint(
+            '⚠️ Android notification permission request not available: $e');
       }
 
       // If the app needs exact alarms, prompt the user via the plugin helper.
@@ -106,7 +114,8 @@ class NotificationService {
     try {
       // Android permissions are managed via AndroidManifest or platform channels.
       await _plugin
-          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(alert: true, badge: true, sound: true);
     } catch (e) {
       debugPrint('⚠️ Error requesting notification permissions: $e');
@@ -141,7 +150,8 @@ class NotificationService {
     String? payload,
   }) async {
     try {
-      await _plugin.show(id, title, body, _notificationDetails(), payload: payload);
+      await _plugin.show(id, title, body, _notificationDetails(),
+          payload: payload);
     } catch (e) {
       debugPrint('❌ Failed to show notification: $e');
     }
@@ -172,11 +182,17 @@ class NotificationService {
     }
   }
 
-  Future<void> scheduleHabitReminder(int habitId, String title, String body, TimeOfDay time) async {
+  int _generateNotificationId(String habitId, int index) {
+    // Combine habitId hash and index to generate unique ID
+    return _normalizeId(habitId.hashCode ^ (index * 397));
+  }
+
+  Future<void> scheduleHabitReminder(
+      int id, String title, String body, TimeOfDay time) async {
     try {
-      final id = _normalizeId(habitId);
       final now = DateTime.now();
-      var scheduled = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+      var scheduled =
+          DateTime(now.year, now.month, now.day, time.hour, time.minute);
       if (!scheduled.isAfter(now)) {
         scheduled = scheduled.add(const Duration(days: 1));
       }
@@ -189,29 +205,51 @@ class NotificationService {
         matchComponents: DateTimeComponents.time,
       );
 
-      debugPrint('🗓️ Scheduled reminder id=$id at ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}');
+      debugPrint(
+          '🗓️ Scheduled reminder id=$id at ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}');
     } catch (e) {
-      debugPrint('❌ Failed to schedule reminder for habit $habitId: $e');
+      debugPrint('❌ Failed to schedule reminder $id: $e');
     }
   }
 
   Future<void> scheduleReminderForHabit(Habit habit) async {
-    if (habit.reminderTime == null) return;
-    final id = _normalizeId(habit.id.hashCode);
-    final title = habit.name;
-    final body = 'Time to complete your habit: ${habit.name}';
-    await cancelReminder(id);
-    await scheduleHabitReminder(id, title, body, habit.reminderTime!);
+    // Cancel existing reminders for this habit first
+    await cancelHabitReminders(habit.id);
+
+    if (habit.reminderTimes.isEmpty) return;
+
+    for (int i = 0; i < habit.reminderTimes.length; i++) {
+      final time = habit.reminderTimes[i];
+      final id = _generateNotificationId(habit.id, i);
+      final title = habit.name;
+      final body = 'Time to complete your habit: ${habit.name}';
+
+      await scheduleHabitReminder(id, title, body, time);
+    }
   }
 
-  Future<void> cancelReminder(int habitId) async {
-    try {
-      final id = _normalizeId(habitId);
-      await _plugin.cancel(id);
-      debugPrint('🛑 Cancelled reminder id=$id');
-    } catch (e) {
-      debugPrint('❌ Failed to cancel reminder $habitId: $e');
+  Future<void> cancelHabitReminders(String habitId) async {
+    // Try cancelling potential IDs (assuming max 20 reminders per habit to be safe)
+    for (int i = 0; i < 20; i++) {
+      try {
+        final id = _generateNotificationId(habitId, i);
+        // We cancel blindly; if it doesn't exist, it's fine.
+        await _plugin.cancel(id);
+      } catch (e) {
+        // Ignore
+      }
     }
+    // Also try cancelling old single reminder ID style just in case of migration
+    try {
+      await _plugin.cancel(_normalizeId(habitId.hashCode));
+    } catch (_) {}
+
+    debugPrint('🛑 Cancelled reminders for habit $habitId');
+  }
+
+  // Deprecated single ID cancel, kept for compatibility if called elsewhere but redirected
+  Future<void> cancelReminder(int habitIdHash) async {
+    await _plugin.cancel(_normalizeId(habitIdHash));
   }
 
   Future<void> cancelAll() async {
@@ -228,7 +266,7 @@ class NotificationService {
     try {
       final habits = HiveService.instance.getHabits();
       for (final habit in habits) {
-        if (habit.reminderTime != null) {
+        if (habit.reminderTimes.isNotEmpty) {
           await scheduleReminderForHabit(habit);
         }
       }
@@ -240,7 +278,8 @@ class NotificationService {
 
   /// Returns the list of pending scheduled notification requests from the plugin.
   /// Returns an empty list on error.
-  Future<List<PendingNotificationRequest>> getPendingNotificationRequests() async {
+  Future<List<PendingNotificationRequest>>
+      getPendingNotificationRequests() async {
     try {
       final pending = await _plugin.pendingNotificationRequests();
       return pending;
