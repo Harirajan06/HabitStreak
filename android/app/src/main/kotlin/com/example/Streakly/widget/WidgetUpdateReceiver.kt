@@ -14,6 +14,8 @@ class WidgetUpdateReceiver : BroadcastReceiver() {
                 val habitId = intent.getStringExtra(HabitWidgetProvider.EXTRA_HABIT_ID) ?: ""
                 val appWidgetId = intent.getIntExtra(HabitWidgetProvider.EXTRA_APPWIDGET_ID, -1)
                 if (habitId.isNotEmpty() && appWidgetId != -1) {
+                    android.util.Log.d("WidgetUpdateReceiver", "Received ACTION_COMPLETE for habit: $habitId (Widget: $appWidgetId)")
+                    
                     // Immediate Update (No Worker latency)
                     WidgetStorage.toggleHabitCompletion(context, habitId)
                     
@@ -32,10 +34,13 @@ class WidgetUpdateReceiver : BroadcastReceiver() {
                     
                     // Notify Flutter app if running!
                     try {
+                        android.util.Log.d("WidgetUpdateReceiver", "Notifying Flutter app...")
                         MainActivity.notifyFlutter(habitId)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
+                } else {
+                     android.util.Log.e("WidgetUpdateReceiver", "Invalid habitId or appWidgetId")
                 }
             }
         }

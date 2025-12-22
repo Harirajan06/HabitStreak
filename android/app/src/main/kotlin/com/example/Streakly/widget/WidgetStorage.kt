@@ -121,6 +121,7 @@ object WidgetStorage {
         prefs.edit().putString(KEY_HABITS_DATA, allData.toString()).apply()
 
         // Add Pending Action
+        android.util.Log.d("WidgetStorage", "Toggled completion for $habitId. Saving pending action.")
         addPendingAction(context, habitId)
     }
 
@@ -128,16 +129,21 @@ object WidgetStorage {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val actions = getPendingActions(context).toMutableList()
         actions.add(habitId)
-        prefs.edit().putString("pending_actions", actions.joinToString(",")).apply()
+        val joined = actions.joinToString(",")
+        android.util.Log.d("WidgetStorage", "Saving pending actions: $joined")
+        // Use commit() to ensure data is written immediately before app might resume
+        prefs.edit().putString("pending_actions", joined).commit()
     }
 
     fun getPendingActions(context: Context): List<String> {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val raw = prefs.getString("pending_actions", "") ?: ""
+        android.util.Log.d("WidgetStorage", "Reading pending actions: $raw")
         return if (raw.isEmpty()) emptyList() else raw.split(",")
     }
 
     fun clearPendingActions(context: Context) {
+        android.util.Log.d("WidgetStorage", "Clearing pending actions")
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().remove("pending_actions").apply()
     }

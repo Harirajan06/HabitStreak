@@ -7,7 +7,7 @@ import '../services/hive_service.dart';
 import '../services/admob_service.dart'; // Import AdmobService
 import '../services/widget_service.dart';
 
-class HabitProvider with ChangeNotifier {
+class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
   final List<Habit> _habits = [];
 
   bool _isLoading = false;
@@ -46,6 +46,9 @@ class HabitProvider with ChangeNotifier {
   }
 
   HabitProvider(this._admobService) {
+    // Listen for lifecycle changes to sync widget actions on resume
+    WidgetsBinding.instance.addObserver(this);
+
     // Listen for widget updates (instant sync)
     _widgetService.initialize((habitId) {
       debugPrint(
@@ -55,6 +58,20 @@ class HabitProvider with ChangeNotifier {
 
     // Update constructor
     loadHabits();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      debugPrint("HabitProvider: App Resumed - Syncing Widget Actions");
+      syncWidgetActions();
+    }
   }
 
   Future<void> loadHabits() async {
