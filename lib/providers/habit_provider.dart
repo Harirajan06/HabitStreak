@@ -88,6 +88,11 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
 
       await syncWidgetActions();
 
+      // Refresh all widgets to ensure native cache has latest remindersPerDay/data
+      for (final habit in _habits) {
+        _widgetService.updateWidgetForHabit(habit);
+      }
+
       // Only notify if we have a widget tree
       if (WidgetsBinding.instance.isRootWidgetAttached) {
         notifyListeners();
@@ -215,26 +220,27 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
       final newDailyCompletions = Map<String, int>.from(habit.dailyCompletions);
       final completedDates = List<DateTime>.from(habit.completedDates);
 
-      final wasAllCompleted = _areAllHabitsCompleted();
-
       if (currentCount >= habit.remindersPerDay) {
-        debugPrint(
-            '⚠️  Habit "${habit.name}" is fully completed for today. Try again tomorrow!');
-        _errorMessage =
-            'Habit already completed for today. Come back tomorrow!';
-        notifyListeners();
-        return; // Exit without making changes
+        // Already completed today. Do nothing.
+        return;
       }
 
       final newCount = currentCount + 1;
+
       newDailyCompletions[todayKey] = newCount;
 
-      if (currentCount == 0) {
-        completedDates.add(today);
+      if (newCount >= habit.remindersPerDay) {
+        // Fully completed: Add today if not present
+        if (!completedDates.any((date) => _isSameDay(date, today))) {
+          completedDates.add(today);
+        }
+      } else {
+        // Partially completed: Remove today if present (it shouldn't be considered "Completed" yet)
+        completedDates.removeWhere((date) => _isSameDay(date, today));
       }
 
       debugPrint(
-          '✅ Habit "${habit.name}" marked complete ($newCount/${habit.remindersPerDay})');
+          '✅ Habit "${habit.name}" updated to ($newCount/${habit.remindersPerDay})');
 
       try {
         await HiveService.instance.recordCompletion(id, today, count: newCount);
@@ -247,9 +253,15 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
         dailyCompletions: newDailyCompletions,
       );
       _widgetService.updateWidgetForHabit(_habits[index]);
-      _admobService.showInterstitialAd(isPremium: isPremium); // Show ad
 
-      if (context != null && newCount >= habit.remindersPerDay) {
+      // Show ad only on increments, not resets?
+      if (newCount > currentCount) {
+        _admobService.showInterstitialAd(isPremium: isPremium);
+      }
+
+      if (context != null &&
+          newCount == habit.remindersPerDay &&
+          newCount > 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _showHabitCompletionPopup(context, habit);
         });
@@ -257,13 +269,6 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
 
       notifyListeners();
     }
-  }
-
-  bool _areAllHabitsCompleted() {
-    final activeHabitsList = activeHabits;
-    if (activeHabitsList.isEmpty) return false;
-
-    return activeHabitsList.every((habit) => habit.isCompletedToday());
   }
 
   // Sync actions from widget
@@ -318,19 +323,6 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
     );
   }
 
-  void _showAllHabitsCompletedPopup(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => CongratulationsPopup(
-        habitName: 'All habits completed',
-        customMessage: 'You completed all your habits for today! 🎉',
-        habitIcon: Icons.workspace_premium,
-        habitColor: Color(0xFF9B5DE5),
-      ),
-    );
-  }
-
   Future<void> _requestReview() async {
     final prefs = await SharedPreferences.getInstance();
     int habitCreationCount = prefs.getInt('habit_creation_count') ?? 0;
@@ -379,5 +371,11 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
       }
       return habit.name.trim().toLowerCase() == normalized;
     });
+  }
+
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 }

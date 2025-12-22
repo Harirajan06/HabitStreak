@@ -63,22 +63,21 @@ class HabitWidgetProvider : AppWidgetProvider() {
                     val name = habitData.optString("name", "Habit")
                     val streak = habitData.optInt("currentStreak", 0)
                     val isCompleted = habitData.optBoolean("isCompletedToday", false)
-                    val color = habitData.optInt("color", -1)
+                    var color = habitData.optInt("color", -1)
+                    if (color == -1) color = android.graphics.Color.parseColor("#9B5DE5")
+                    
                     val iconBase64 = habitData.optString("iconBase64", "")
+                    val remindersPerDay = habitData.optInt("remindersPerDay", 1)
+                    val dailyCompletions = habitData.optInt("dailyCompletions", 0)
 
                     views.setTextViewText(R.id.tv_habit_name, name)
                     views.setTextViewText(R.id.tv_habit_status, "$streak day streak")
                     
-                    // Apply Color to Ring
-                    // Logic: If NOT completed -> GRAY. If completed -> Habit Color.
-                    if (color != -1 && color != 0) {
-                        if (isCompleted) {
-                             views.setInt(R.id.img_ring, "setColorFilter", color)
-                        } else {
-                             // Use Gray for incomplete state
-                             views.setInt(R.id.img_ring, "setColorFilter", android.graphics.Color.parseColor("#444444"))
-                        }
-                    }
+                    // Draw Progress Ring
+                    val progressBitmap = drawProgressBitmap(context, 200, color, dailyCompletions, remindersPerDay, isCompleted)
+                    views.setImageViewBitmap(R.id.img_ring, progressBitmap)
+                    // Reset any color filter that might interfere
+                    views.setInt(R.id.img_ring, "setColorFilter", 0)
 
                     // Set Icon
                     if (iconBase64.isNotEmpty()) {
@@ -117,6 +116,59 @@ class HabitWidgetProvider : AppWidgetProvider() {
             }
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+
+        private fun drawProgressBitmap(
+            context: Context,
+            size: Int,
+            color: Int,
+            currentCount: Int,
+            totalRequired: Int,
+            isCompleted: Boolean
+        ): android.graphics.Bitmap {
+            val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(bitmap)
+            val center = size / 2f
+            val radius = (size - 12f) / 2f // Adjust for stroke width
+
+            val paint = android.graphics.Paint().apply {
+                isAntiAlias = true
+                this.color = color
+                strokeCap = android.graphics.Paint.Cap.ROUND
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = 20f
+            }
+
+            // Draw greyish background ring (optional, but good for visibility)
+            val bgPaint = android.graphics.Paint().apply {
+                 isAntiAlias = true
+                 this.color = android.graphics.Color.parseColor("#33FFFFFF") 
+                 style = android.graphics.Paint.Style.STROKE
+                 strokeWidth = 20f
+            }
+            canvas.drawCircle(center, center, radius, bgPaint)
+
+            // If effectiveCompleted, ensure we draw full ring
+            val effectiveCount = if (isCompleted && currentCount < totalRequired) totalRequired else currentCount
+            
+            if (totalRequired <= 1) {
+                 if (effectiveCount > 0) {
+                    canvas.drawCircle(center, center, radius, paint)
+                 }
+            } else {
+                // Segmented Arcs
+                val rectF = android.graphics.RectF(center - radius, center - radius, center + radius, center + radius)
+                val sweepAngle = 360f / totalRequired
+                val gap = 6f // degrees gap
+                
+                for (i in 0 until effectiveCount) {
+                    val startAngle = (i * sweepAngle) - 90f
+                    // If it's a full circle (no gaps needed if fully complete? No, user likes segments probably)
+                    // Actually, if it's strictly segmented, let's keep gaps.
+                    canvas.drawArc(rectF, startAngle, sweepAngle - gap, false, paint)
+                }
+            }
+            return bitmap
         }
     }
 }

@@ -97,19 +97,28 @@ object WidgetStorage {
         val habit = allData.getJSONObject(habitId)
         val wasCompleted = habit.optBoolean("isCompletedToday", false)
         val currentStreak = habit.optInt("currentStreak", 0)
-        
-        // Toggle logic
-        val isCompletedNow = !wasCompleted
-        val newStreak = if (isCompletedNow) currentStreak + 1 else (if (currentStreak > 0) currentStreak - 1 else 0)
-        
-        habit.put("isCompletedToday", isCompletedNow)
-        habit.put("currentStreak", newStreak)
-        
-        // Progress (Simple approximation)
+
         val remindersPerDay = habit.optInt("remindersPerDay", 1)
         var dailyCompletions = habit.optInt("dailyCompletions", 0)
-        if (isCompletedNow) dailyCompletions++ else dailyCompletions--
-        if (dailyCompletions < 0) dailyCompletions = 0
+        
+        // Logic: Increment until Target, then Stop. No cycling.
+        if (dailyCompletions < remindersPerDay) {
+            dailyCompletions++
+        } else {
+            // Already maxed out. Do nothing.
+            // Optional: You could log this or trigger a specific "Already Done" broadcast if needed, 
+            // but for now, we just don't update the state which effectively ignores the click.
+            return 
+        }
+
+        val isCompletedNow = dailyCompletions >= remindersPerDay
+        
+        // Update Streak only if we just transitioned to completed
+        if (isCompletedNow && !wasCompleted) {
+            habit.put("currentStreak", currentStreak + 1)
+        }
+        
+        habit.put("isCompletedToday", isCompletedNow)
         habit.put("dailyCompletions", dailyCompletions)
         
         val progress = if (remindersPerDay > 0) (dailyCompletions.toDouble() / remindersPerDay).coerceIn(0.0, 1.0) else 0.0
