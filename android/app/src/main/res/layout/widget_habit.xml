@@ -1,0 +1,108 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- State A: Empty (Add Habit) -->
+    <LinearLayout
+        android:id="@+id/container_state_a"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginBottom="8dp"
+            android:src="@android:drawable/ic_input_add" />
+
+        <TextView
+            android:id="@+id/btn_add_habit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Add a Habit"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:gravity="center"/>
+
+    </LinearLayout>
+
+    <!-- State B: Active (Content) -->
+    <RelativeLayout
+        android:id="@+id/container_state_b"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <!-- Header: HABITS -->
+        <TextView
+            android:id="@+id/tv_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"
+            android:text="HABITS"
+            android:textColor="#888888"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <!-- Habit Name -->
+        <TextView
+            android:id="@+id/tv_habit_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_header"
+            android:layout_marginTop="4dp"
+            android:layout_toStartOf="@+id/btn_complete_frame"
+            android:layout_marginEnd="16dp"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:scrollHorizontally="true"
+            android:text="Habit Name"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <!-- Streak Info -->
+        <TextView
+            android:id="@+id/tv_habit_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_habit_name"
+            android:layout_marginTop="4dp"
+            android:text="0 day streak"
+            android:textColor="#CCCCCC"
+            android:textSize="14sp" />
+
+        <!-- Progress Ring / Interaction Area -->
+        <FrameLayout
+            android:id="@+id/btn_complete_frame"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true">
+
+            <ImageView
+                android:id="@+id/img_ring"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/widget_ring"
+                android:scaleType="fitCenter" />
+
+            <ImageView
+                android:id="@+id/btn_complete_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center" />
+        </FrameLayout>
+
+    </RelativeLayout>
+</LinearLayout>

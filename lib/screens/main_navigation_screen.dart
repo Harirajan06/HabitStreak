@@ -3,6 +3,7 @@ import 'habits/habit_grid_screen.dart';
 import 'notes/notes_screen.dart';
 import 'habits/add_habit_screen.dart';
 import '../services/navigation_service.dart';
+import '../mixins/widget_logic_mixin.dart';
 
 /// MainNavigationScreen provides persistent bottom navigation for the grid view mode
 /// This ensures all screens maintain the navigation bar when accessed from grid view
@@ -19,7 +20,8 @@ class MainNavigationScreen extends StatefulWidget {
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
+class _MainNavigationScreenState extends State<MainNavigationScreen>
+    with WidgetLogicMixin {
   late int _currentIndex;
   late PageController _pageController;
 
@@ -63,7 +65,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           });
           NavigationService.setCurrentTab(index);
         },
-        physics: const BouncingScrollPhysics(), // Enable smooth scrolling with bounce effect
+        physics:
+            const BouncingScrollPhysics(), // Enable smooth scrolling with bounce effect
         allowImplicitScrolling: false,
         children: const [
           HabitGridScreen(),
@@ -127,9 +130,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Expanded(child: _buildNavItem(0, Icons.track_changes_outlined, Icons.track_changes, 'Habits')),
+                Expanded(
+                    child: _buildNavItem(0, Icons.track_changes_outlined,
+                        Icons.track_changes, 'Habits')),
                 const SizedBox(width: 60), // Space for FAB
-                Expanded(child: _buildNavItem(1, Icons.note_outlined, Icons.note, 'Notes')),
+                Expanded(
+                    child: _buildNavItem(
+                        1, Icons.note_outlined, Icons.note, 'Notes')),
               ],
             ),
           ),
@@ -138,7 +145,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, IconData selectedIcon, String label) {
+  Widget _buildNavItem(
+      int index, IconData icon, IconData selectedIcon, String label) {
     final isSelected = index == _currentIndex;
     return GestureDetector(
       onTap: () => _onTabTapped(index),
@@ -163,7 +171,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   fontSize: 11,
                   color: isSelected
                       ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      : Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.6),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
                 textAlign: TextAlign.center,

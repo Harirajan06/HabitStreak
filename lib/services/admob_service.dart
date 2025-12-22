@@ -1,10 +1,14 @@
-
 // import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdmobService {
-  static String get interstitialAdUnitId => 'ca-app-pub-9133183118664083/7252895988';
+  static String get interstitialAdUnitId {
+    if (kDebugMode) {
+      return 'ca-app-pub-3940256099942544/1033173712'; // Test ID
+    }
+    return 'ca-app-pub-9133183118664083/7252895988'; // Production ID
+  }
 
   InterstitialAd? _interstitialAd;
 

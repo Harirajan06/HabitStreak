@@ -69,8 +69,7 @@ dependencies:
   # HTTP requests
   http: ^1.1.2
   
-  # Supabase Backend
-  # Supabase removed - using local Hive storage instead
+  # Supabase Backend (Removed)
   app_links: 6.3.2
 
   # Local storage
@@ -157,6 +156,6 @@ flutter_icons:
     generate: true
   linux:
     generate: true
-  image_path: "assets/icon/App_icon.png"
+  image_path: "assets/icon/app_icon.jpeg"
   adaptive_icon_background: "#1a1a2e"
-  adaptive_icon_foreground: "assets/icon/App_icon.png"
+  adaptive_icon_foreground: "assets/icon/app_icon.jpeg"

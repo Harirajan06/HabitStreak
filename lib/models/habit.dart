@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 enum HabitFrequency { daily, weekly, monthly }
+
 enum HabitTimeOfDay { morning, afternoon, evening, night }
+
 enum HabitType { build, breakHabit }
 
 class Habit {
@@ -20,7 +22,7 @@ class Habit {
   final int remindersPerDay;
   final Map<String, int> dailyCompletions; // date string -> completion count
   final bool? isTemporary;
-  
+
   Habit({
     required this.id,
     required this.name,
@@ -38,20 +40,20 @@ class Habit {
     this.dailyCompletions = const {},
     this.isTemporary,
   });
-  
+
   int get currentStreak {
     if (completedDates.isEmpty) return 0;
-    
+
     // Sort dates in descending order (most recent first)
     final sortedDates = completedDates.toList()..sort((a, b) => b.compareTo(a));
-    
+
     final today = DateTime.now();
     final yesterday = today.subtract(const Duration(days: 1));
-    
+
     // Check if the most recent completion was today or yesterday
     final mostRecentDate = sortedDates.first;
     DateTime startDate;
-    
+
     if (_isSameDay(mostRecentDate, today)) {
       startDate = today;
     } else if (_isSameDay(mostRecentDate, yesterday)) {
@@ -60,11 +62,11 @@ class Habit {
       // Most recent completion is older than yesterday, so current streak is 0
       return 0;
     }
-    
+
     // Count consecutive days backwards from startDate
     int streak = 0;
     DateTime checkDate = startDate;
-    
+
     for (final completedDate in sortedDates) {
       if (_isSameDay(completedDate, checkDate)) {
         streak++;
@@ -74,25 +76,25 @@ class Habit {
         break;
       }
     }
-    
+
     return streak;
   }
-  
+
   int get longestStreak {
     if (completedDates.isEmpty) return 0;
     if (completedDates.length == 1) return 1;
-    
+
     // Sort dates in ascending order
     final sortedDates = completedDates.toList()..sort();
-    
+
     int bestStreak = 1;
     int tempStreak = 1;
-    
+
     // Algorithm: Find longest consecutive sequence
     for (int i = 1; i < sortedDates.length; i++) {
       final prevDate = sortedDates[i - 1];
       final currentDate = sortedDates[i];
-      
+
       // Check if current date is exactly 1 day after previous date
       if (currentDate.difference(prevDate).inDays == 1) {
         tempStreak += 1;
@@ -101,35 +103,35 @@ class Habit {
         tempStreak = 1;
       }
     }
-    
+
     // Don't forget to check the last streak
     bestStreak = bestStreak > tempStreak ? bestStreak : tempStreak;
-    
+
     return bestStreak;
   }
-  
+
   double get completionRate {
     if (completedDates.isEmpty) return 0.0;
-    
+
     final daysSinceCreated = DateTime.now().difference(createdAt).inDays + 1;
     return (completedDates.length / daysSinceCreated).clamp(0.0, 1.0);
   }
-  
+
   int get score {
     if (completedDates.isEmpty) return 0;
-    
+
     // Basic scoring: Each completed day = 1 point
     int basicScore = completedDates.length;
-    
+
     // Advanced scoring with streak bonuses
     final sortedDates = completedDates.toList()..sort();
     int bonusScore = 0;
     int streak = 1;
-    
+
     for (int i = 1; i < sortedDates.length; i++) {
       final prevDate = sortedDates[i - 1];
       final currentDate = sortedDates[i];
-      
+
       if (currentDate.difference(prevDate).inDays == 1) {
         streak += 1;
       } else {
@@ -140,39 +142,39 @@ class Habit {
         streak = 1;
       }
     }
-    
+
     // Don't forget to check the last streak for bonus
     if (streak >= 7) {
       bonusScore += (streak ~/ 7) * 5;
     }
-    
+
     return basicScore + bonusScore;
   }
-  
+
   bool isCompletedToday() {
     final today = DateTime.now();
     return completedDates.any((date) => _isSameDay(date, today));
   }
-  
+
   int getTodayCompletionCount() {
     final todayKey = _getDateKey(DateTime.now());
     return dailyCompletions[todayKey] ?? 0;
   }
-  
+
   bool isFullyCompletedToday() {
     return getTodayCompletionCount() >= remindersPerDay;
   }
-  
+
   String _getDateKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
-  
+
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
-           date1.month == date2.month &&
-           date1.day == date2.day;
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
-  
+
   Habit copyWith({
     String? id,
     String? name,
@@ -208,7 +210,7 @@ class Habit {
       isTemporary: isTemporary ?? this.isTemporary,
     );
   }
-  
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -220,9 +222,10 @@ class Habit {
       'timeOfDay': timeOfDay.index,
       'habitType': habitType.index,
       'createdAt': createdAt.millisecondsSinceEpoch,
-      'completedDates': completedDates.map((date) => date.millisecondsSinceEpoch).toList(),
+      'completedDates':
+          completedDates.map((date) => date.millisecondsSinceEpoch).toList(),
       'isActive': isActive,
-      'reminderTime': reminderTime != null 
+      'reminderTime': reminderTime != null
           ? {'hour': reminderTime!.hour, 'minute': reminderTime!.minute}
           : null,
       'remindersPerDay': remindersPerDay,
@@ -230,7 +233,24 @@ class Habit {
       'isTemporary': isTemporary,
     };
   }
-  
+
+  Map<String, dynamic> toWidgetJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'icon': icon.codePoint,
+      'color': color.value,
+      'currentStreak': currentStreak,
+      'isCompletedToday': isCompletedToday(),
+      'remindersPerDay': remindersPerDay,
+      'dailyCompletions': getTodayCompletionCount(),
+      'progressPercent': remindersPerDay > 0
+          ? (getTodayCompletionCount() / remindersPerDay).clamp(0.0, 1.0)
+          : 0.0,
+    };
+  }
+
   factory Habit.fromJson(Map<String, dynamic> json) {
     return Habit(
       id: json['id'],
@@ -256,5 +276,21 @@ class Habit {
       dailyCompletions: Map<String, int>.from(json['dailyCompletions'] ?? {}),
       isTemporary: json['isTemporary'],
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'color': color.value,
+      'currentStreak': currentStreak,
+      'isCompletedToday': isCompletedToday(),
+      'remindersPerDay': remindersPerDay,
+      'dailyCompletions': getTodayCompletionCount(),
+      'progressPercent': remindersPerDay > 0
+          ? (getTodayCompletionCount() / remindersPerDay)
+          : 0.0,
+    };
   }
 }

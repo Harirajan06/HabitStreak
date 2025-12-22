@@ -1,17 +1,31 @@
 # Streakly
 
-A new Flutter project.
+Streakly is a Modern, **Local-First** Habit Tracker built with Flutter.
+
+## Features
+
+- **Local Storage**: All data is stored securely on your device using Hive. No account required.
+- **Habit Tracking**: Create, track, and manage your daily habits.
+- **Notes**: Add notes to your habits to track progress details.
+- **Privacy Focused**: Your data stays with you.
+- **Customizable**: Set reminders (coming soon), icons, and colors.
+- **Widgets**: Home screen widgets for quick access.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+1. **Install Dependencies**:
+   ```bash
+   flutter pub get
+   ```
 
-A few resources to get you started if this is your first Flutter project:
+2. **Run the App**:
+   ```bash
+   flutter run
+   ```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Architecture
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# Streakly App
+This project was migrated from a cloud-based (Supabase) architecture to a fully local one.
+- **State Management**: Provider
+- **Storage**: Hive (NoSQL)
+- **Notifications**: Flutter Local Notifications (In Progress)

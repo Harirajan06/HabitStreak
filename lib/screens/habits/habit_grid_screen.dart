@@ -12,6 +12,7 @@ import '../profile/profile_screen.dart';
 import '../../services/navigation_service.dart';
 import '../subscription/subscription_plans_screen.dart';
 import '../../providers/auth_provider.dart'; // Import AuthProvider
+import '../../widgets/marquee_widget.dart';
 
 class HabitGridScreen extends StatefulWidget {
   const HabitGridScreen({super.key});
@@ -36,7 +37,8 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
+        backgroundColor:
+            theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
         elevation: 0,
         titleSpacing: 0,
         automaticallyImplyLeading: false,
@@ -108,20 +110,23 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.track_changes,
-                      size: 80,
-                      color: theme.colorScheme.onSurface.withAlpha((0.3 * 255).round())),
+                        size: 80,
+                        color: theme.colorScheme.onSurface
+                            .withAlpha((0.3 * 255).round())),
                     const SizedBox(height: 16),
                     Text(
                       'No habits found',
                       style: theme.textTheme.headlineSmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withAlpha((0.6 * 255).round()),
+                        color: theme.colorScheme.onSurface
+                            .withAlpha((0.6 * 255).round()),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Add some habits to see your progress grid',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withAlpha((0.4 * 255).round()),
+                        color: theme.colorScheme.onSurface
+                            .withAlpha((0.4 * 255).round()),
                       ),
                     ),
                   ],
@@ -191,7 +196,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                                     style:
                                         theme.textTheme.headlineSmall?.copyWith(
                                       fontWeight: FontWeight.w400,
-                                        color: theme.colorScheme.primary
+                                      color: theme.colorScheme.primary
                                           .withAlpha((0.8 * 255).round()),
                                       fontSize: 26,
                                     ),
@@ -247,62 +252,79 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2C3145),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Icon(habit.icon, color: habit.color, size: 18),
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              habit.name,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.onSurface,
-                              ),
+                    Expanded(
+                      // Constrain the left side to available space
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2C3145),
+                              borderRadius: BorderRadius.circular(6),
                             ),
-                            Row(
+                            child:
+                                Icon(habit.icon, color: habit.color, size: 18),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            // Constrain the text column
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                ShaderMask(
-                                  shaderCallback: (Rect bounds) {
-                                    return LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Color(0xFFD0A9F5),
-                                        Color(0xFF9B5DE5),
-                                      ],
-                                    ).createShader(bounds);
-                                  },
-                                  child: const Icon(
-                                    Icons.local_fire_department,
-                                    color: Colors.white,
-                                    size: 16,
+                                MarqueeWidget(
+                                  // Auto-scrolls if too long
+                                  child: Text(
+                                    habit.name,
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                    maxLines:
+                                        1, // Ensure single line for marquee
                                   ),
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${_calculateCurrentStreak(habit)} day streak',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                Row(
+                                  children: [
+                                    ShaderMask(
+                                      shaderCallback: (Rect bounds) {
+                                        return LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Color(0xFFD0A9F5),
+                                            Color(0xFF9B5DE5),
+                                          ],
+                                        ).createShader(bounds);
+                                      },
+                                      child: const Icon(
+                                        Icons.local_fire_department,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${_calculateCurrentStreak(habit)} day streak',
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(
+                        width: 8), // Spacing between text and buttons
                     Row(
+                      mainAxisSize: MainAxisSize.min, // Keep buttons tight
                       children: [
                         HabitNoteIconButton(habit: habit, size: 32),
                         const SizedBox(width: 6),
@@ -363,8 +385,8 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                       } else if (cellDate.isAfter(now)) {
                         cellColor = habit.color.withAlpha((0.15 * 255).round());
                       } else {
-                            cellColor =
-                            theme.colorScheme.onSurface.withAlpha((0.1 * 255).round());
+                        cellColor = theme.colorScheme.onSurface
+                            .withAlpha((0.1 * 255).round());
                       }
 
                       final isToday = cellDate.day == now.day &&
@@ -481,7 +503,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
       builder: (BuildContext context) {
         return Container(
           decoration: BoxDecoration(
-                  color: theme.cardColor,
+            color: theme.cardColor,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
@@ -494,8 +516,9 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                 width: 40,
                 height: 4,
                 margin: const EdgeInsets.only(top: 12, bottom: 20),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurface.withAlpha((0.3 * 255).round()),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurface
+                      .withAlpha((0.3 * 255).round()),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -506,7 +529,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-                ListTile(
+              ListTile(
                 leading: Container(
                   width: 40,
                   height: 40,
@@ -567,7 +590,8 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                   await NavigationService.setGridViewMode(true);
                   if (context.mounted) {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const MainNavigationScreen()),
                     );
                   }
                 },

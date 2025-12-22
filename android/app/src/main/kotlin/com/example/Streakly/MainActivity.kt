@@ -1,0 +1,135 @@
+package com.example.Streakly
+
+import android.appwidget.AppWidgetManager
+import android.content.Intent
+import android.os.Bundle
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+import com.example.Streakly.widget.HabitWidgetProvider
+import com.example.Streakly.widget.WidgetStorage
+
+class MainActivity: FlutterActivity() {
+    private val CHANNEL = "com.example.Streakly/widget"
+
+    companion object {
+        var channel: MethodChannel? = null
+        fun notifyFlutter(habitId: String) {
+            channel?.invokeMethod("onWidgetAction", habitId)
+        }
+    }
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        channel?.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getWidgetConfig" -> {
+                    // Start from widget config?
+                    val mode = intent.getBooleanExtra("WIDGET_CONFIG_MODE", false)
+                    val appWidgetId = intent.getIntExtra("APPWIDGET_ID", -1)
+                    val map = HashMap<String, Any>()
+                    map["mode"] = mode
+                    map["appWidgetId"] = appWidgetId
+                    result.success(map)
+                }
+                "finishWithSelectedHabit" -> {
+                    val habitId = call.argument<String>("habitId")
+                    val appWidgetId = call.argument<Int>("appWidgetId")
+                    val habitJson = call.argument<String>("habit")
+                    if (appWidgetId != null && appWidgetId != -1) {
+                        if (habitId.isNullOrEmpty()) {
+                            setResult(RESULT_CANCELED)
+                        } else {
+                            // Save mapping directly here as we have the data
+                            if (habitJson != null) {
+                                WidgetStorage.saveHabitData(context, habitId, habitJson)
+                                WidgetStorage.setWidgetMapping(context, appWidgetId, habitId)
+                            }
+                            
+                            val resultValue = Intent()
+                            resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                            // Crucial: Pass back the habit ID so calling activity knows it succeeded
+                            resultValue.putExtra("selectedHabitId", habitId)
+                            setResult(RESULT_OK, resultValue)
+                            
+                            updateWidget(appWidgetId)
+                        }
+                        finish()
+                    }
+                    result.success(true)
+                }
+                "setWidgetMapping" -> {
+                    val appWidgetId = call.argument<Int>("appWidgetId")
+                    val habitJson = call.argument<String>("habit")
+                    if (appWidgetId != null && habitJson != null) {
+                        try {
+                             // Parse minimal to get ID
+                             // We trust passed JSON has ID.
+                             val jsonObject = org.json.JSONObject(habitJson)
+                             val habitId = jsonObject.optString("id")
+                             
+                             if (habitId.isNotEmpty()) {
+                                 WidgetStorage.setWidgetMapping(context, appWidgetId, habitId)
+                                 WidgetStorage.saveHabitData(context, habitId, habitJson)
+                                 updateWidget(appWidgetId)
+                             }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                    result.success(null)
+                }
+                "updateWidgetForHabit" -> {
+                    val habitId = call.argument<String>("habitId")
+                    val habitJson = call.argument<String>("habit")
+                    if (habitId != null && habitJson != null) {
+                         WidgetStorage.saveHabitData(context, habitId, habitJson)
+                         // Find all widgets with this habit
+                         val mapping = WidgetStorage.getWidgetMapping(context)
+                         val idsToUpdate = mapping.filterValues { it == habitId }.keys
+                         for (id in idsToUpdate) {
+                             updateWidget(id)
+                         }
+                    }
+                    result.success(null)
+                }
+                "clearWidgetMapping" -> {
+                    val appWidgetId = call.argument<Int>("appWidgetId")
+                    if (appWidgetId != null) {
+                        WidgetStorage.removeStartAppWidgetId(context, appWidgetId)
+                        updateWidget(appWidgetId)
+                    }
+                    result.success(null)
+                }
+                 "notifyHabitDeleted" -> {
+                    val habitId = call.argument<String>("habitId")
+                    if (habitId != null) {
+                        WidgetStorage.removeHabitData(context, habitId)
+                        val affectedIds = WidgetStorage.clearMappingsForHabit(context, habitId)
+                        for (id in affectedIds) {
+                            updateWidget(id)
+                        }
+                    }
+                    result.success(null)
+                }
+                "getPendingActions" -> {
+                    val actions = WidgetStorage.getPendingActions(context)
+                    result.success(actions)
+                }
+                "clearPendingActions" -> {
+                    WidgetStorage.clearPendingActions(context)
+                    result.success(null)
+                }
+                else -> {
+                    result.notImplemented()
+                }
+            }
+        }
+    }
+
+    private fun updateWidget(appWidgetId: Int) {
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        HabitWidgetProvider.updateAppWidget(context, appWidgetManager, appWidgetId)
+    }
+}

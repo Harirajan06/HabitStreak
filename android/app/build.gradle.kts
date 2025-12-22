@@ -47,6 +47,11 @@ dependencies {
     // Add WindowManager dependency to mitigate potential Android 12L+ issues when
     // enabling desugaring (see Flutter issue #110658 and plugin guidance).
     implementation("androidx.window:window:1.1.0")
+    // AndroidX core and AppCompat
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    // WorkManager for background widget updates
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
 }
 
 flutter {

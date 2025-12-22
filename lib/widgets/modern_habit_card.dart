@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/habit.dart';
 import '../providers/habit_provider.dart';
+import 'marquee_widget.dart';
 
 class ModernHabitCard extends StatelessWidget {
   final Habit habit;
@@ -28,12 +29,14 @@ class ModernHabitCard extends StatelessWidget {
         confirmDismiss: (direction) async {
           if (direction == DismissDirection.endToStart) {
             // Swipe left - Delete
-            final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+            final habitProvider =
+                Provider.of<HabitProvider>(context, listen: false);
             final confirmed = await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(
                 title: const Text('Delete Habit'),
-                content: Text('Are you sure you want to delete "${habit.name}"?'),
+                content:
+                    Text('Are you sure you want to delete "${habit.name}"?'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
@@ -47,11 +50,11 @@ class ModernHabitCard extends StatelessWidget {
                 ],
               ),
             );
-            
-              if (confirmed == true) {
-                habitProvider.deleteHabit(habit.id);
-                return true; // Allow dismiss
-              }
+
+            if (confirmed == true) {
+              habitProvider.deleteHabit(habit.id);
+              return true; // Allow dismiss
+            }
             return false; // Cancel dismiss
           } else if (direction == DismissDirection.startToEnd) {
             // Swipe right - Quick complete (if not fully completed)
@@ -74,7 +77,9 @@ class ModernHabitCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                isFullyCompleted ? Icons.check_circle : Icons.check_circle_outline,
+                isFullyCompleted
+                    ? Icons.check_circle
+                    : Icons.check_circle_outline,
                 color: Colors.white,
                 size: 32,
               ),
@@ -118,33 +123,33 @@ class ModernHabitCard extends StatelessWidget {
           ),
         ),
         child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF2D2D2D),
-          borderRadius: BorderRadius.circular(16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF2D2D2D),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((0.1 * 255).round()),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top Section - Header
-              _buildHeader(context, isCompleted),
-              const SizedBox(height: 16),
-              
-              // Main Section - Calendar Grid
-              _buildCalendarGrid(context),
+              BoxShadow(
+                color: Colors.black.withAlpha((0.1 * 255).round()),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
             ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Section - Header
+                _buildHeader(context, isCompleted),
+                const SizedBox(height: 16),
+
+                // Main Section - Calendar Grid
+                _buildCalendarGrid(context),
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -152,7 +157,7 @@ class ModernHabitCard extends StatelessWidget {
     final isFullyCompleted = habit.isFullyCompletedToday();
     final completionCount = habit.getTodayCompletionCount();
     final totalRequired = habit.remindersPerDay;
-    
+
     return Row(
       children: [
         // Habit Icon
@@ -170,25 +175,28 @@ class ModernHabitCard extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        
+
         // Title and Subtitle
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                habit.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              MarqueeWidget(
+                child: Text(
+                  habit.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
                 ),
               ),
               const SizedBox(height: 2),
               Row(
                 children: [
                   Text(
-                      'Streak: ${habit.currentStreak}',
+                    'Streak: ${habit.currentStreak}',
                     style: TextStyle(
                       color: Colors.white.withAlpha((0.7 * 255).round()),
                       fontSize: 12,
@@ -199,11 +207,13 @@ class ModernHabitCard extends StatelessWidget {
                     Text(
                       '• $completionCount/$totalRequired today',
                       style: TextStyle(
-                        color: isFullyCompleted 
-                          ? Colors.green 
-                          : Colors.white.withAlpha((0.7 * 255).round()),
+                        color: isFullyCompleted
+                            ? Colors.green
+                            : Colors.white.withAlpha((0.7 * 255).round()),
                         fontSize: 12,
-                        fontWeight: isFullyCompleted ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isFullyCompleted
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -212,12 +222,12 @@ class ModernHabitCard extends StatelessWidget {
             ],
           ),
         ),
-        
+
         // Completion Status
         Consumer<HabitProvider>(
           builder: (context, habitProvider, child) {
             return GestureDetector(
-              onTap: isFullyCompleted 
+              onTap: isFullyCompleted
                   ? null // Disable tap when fully completed
                   : () {
                       habitProvider.toggleHabitCompletion(habit.id, context);
@@ -227,17 +237,17 @@ class ModernHabitCard extends StatelessWidget {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: isFullyCompleted 
-                      ? Colors.green 
-                        : isCompleted 
+                  color: isFullyCompleted
+                      ? Colors.green
+                      : isCompleted
                           ? Colors.green.withAlpha((0.5 * 255).round())
                           : Colors.transparent,
                   border: Border.all(
-                    color: isFullyCompleted 
-                    ? Colors.green 
-                    : isCompleted 
-                      ? Colors.green.withAlpha((0.5 * 255).round())
-                      : Colors.white.withAlpha((0.3 * 255).round()),
+                    color: isFullyCompleted
+                        ? Colors.green
+                        : isCompleted
+                            ? Colors.green.withAlpha((0.5 * 255).round())
+                            : Colors.white.withAlpha((0.3 * 255).round()),
                     width: 2,
                   ),
                   borderRadius: BorderRadius.circular(14),
@@ -259,15 +269,17 @@ class ModernHabitCard extends StatelessWidget {
 
   Widget _buildCalendarGrid(BuildContext context) {
     final now = DateTime.now();
-    final startDate = now.subtract(Duration(days: daysToShow - 7)); // Show past days + future days
+    final startDate = now.subtract(
+        Duration(days: daysToShow - 7)); // Show past days + future days
     final days = <DateTime>[];
-    
+
     // Generate days for the grid
     for (int i = 0; i < daysToShow; i++) {
       days.add(startDate.add(Duration(days: i)));
     }
 
-    final orderedDays = days.reversed.toList(); // Recent dates should appear first visually.
+    final orderedDays =
+        days.reversed.toList(); // Recent dates should appear first visually.
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -275,13 +287,16 @@ class ModernHabitCard extends StatelessWidget {
         const cellSize = 24.0;
         const spacing = 4.0;
         final availableWidth = constraints.maxWidth;
-        final cellsPerRow = ((availableWidth + spacing) / (cellSize + spacing)).floor();
-        
+        final cellsPerRow =
+            ((availableWidth + spacing) / (cellSize + spacing)).floor();
+
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
           textDirection: TextDirection.ltr,
-          children: orderedDays.map((day) => _buildDayCell(day, now, cellSize)).toList(),
+          children: orderedDays
+              .map((day) => _buildDayCell(day, now, cellSize))
+              .toList(),
         );
       },
     );
@@ -290,7 +305,8 @@ class ModernHabitCard extends StatelessWidget {
   Widget _buildDayCell(DateTime day, DateTime now, double size) {
     final isToday = _isSameDay(day, now);
     final isFuture = day.isAfter(now);
-    final isCompleted = habit.completedDates.any((date) => _isSameDay(date, day));
+    final isCompleted =
+        habit.completedDates.any((date) => _isSameDay(date, day));
     final isMissed = !isFuture && !isCompleted && !isToday;
 
     Color cellColor;
@@ -314,7 +330,9 @@ class ModernHabitCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cellColor,
         borderRadius: BorderRadius.circular(4),
-        border: borderColor != null ? Border.all(color: borderColor, width: 1) : null,
+        border: borderColor != null
+            ? Border.all(color: borderColor, width: 1)
+            : null,
       ),
       child: isToday && !isCompleted
           ? Center(
@@ -333,7 +351,7 @@ class ModernHabitCard extends StatelessWidget {
 
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
-           date1.month == date2.month &&
-           date1.day == date2.day;
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 }

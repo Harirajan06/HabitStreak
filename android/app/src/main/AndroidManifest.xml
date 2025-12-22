@@ -66,6 +66,24 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-9133183118664083~8478062334"/>
+
+        <!-- Habit Widget provider -->
+        <receiver android:name=".widget.HabitWidgetProvider" android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/habit_widget_info" />
+        </receiver>
+
+        <!-- Update receiver for widget button clicks (delegates to WorkManager) -->
+        <receiver android:name=".widget.WidgetUpdateReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.Streakly.widget.ACTION_COMPLETE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Configuration activity launched when adding the widget or when user taps + Add Habit -->
+        <activity android:name=".widget.WidgetConfigureActivity" android:exported="true" android:theme="@style/WidgetConfigTheme" />
     </application>
     <uses-permission android:name="android.permission.INTERNET"/>
 </manifest>

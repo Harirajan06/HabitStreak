@@ -5,6 +5,7 @@ import '../habits/add_habit_screen.dart';
 import '../notes/notes_screen.dart';
 import '../../providers/habit_provider.dart';
 import '../../providers/note_provider.dart';
+import '../../mixins/widget_logic_mixin.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -13,7 +14,8 @@ class MainNavigation extends StatefulWidget {
   State<MainNavigation> createState() => _MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class _MainNavigationState extends State<MainNavigation>
+    with WidgetsBindingObserver, WidgetLogicMixin {
   int _currentIndex = 0;
   int _previousIndex = 0;
 
@@ -37,14 +39,20 @@ class _MainNavigationState extends State<MainNavigation> {
           gradient: LinearGradient(
             colors: [
               Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.primary.withAlpha((0.8 * 255).toInt()),
+              Theme.of(context)
+                  .colorScheme
+                  .primary
+                  .withAlpha((0.8 * 255).toInt()),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withAlpha((0.3 * 255).toInt()),
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary
+                  .withAlpha((0.3 * 255).toInt()),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -76,9 +84,13 @@ class _MainNavigationState extends State<MainNavigation> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Expanded(child: _buildNavItem(0, Icons.track_changes_outlined, Icons.track_changes, 'Habits')),
+              Expanded(
+                  child: _buildNavItem(0, Icons.track_changes_outlined,
+                      Icons.track_changes, 'Habits')),
               const SizedBox(width: 60), // Space for FAB
-              Expanded(child: _buildNavItem(1, Icons.note_outlined, Icons.note, 'Notes')),
+              Expanded(
+                  child: _buildNavItem(
+                      1, Icons.note_outlined, Icons.note, 'Notes')),
             ],
           ),
         ),
@@ -86,7 +98,8 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, IconData selectedIcon, String label) {
+  Widget _buildNavItem(
+      int index, IconData icon, IconData selectedIcon, String label) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () {
@@ -95,16 +108,18 @@ class _MainNavigationState extends State<MainNavigation> {
           _previousIndex = previousIndex;
           _currentIndex = index;
         });
-        
+
         // Refresh data when returning to main tabs
         if (previousIndex != index) {
           if (index == 0) {
             // Refresh habits when returning to habits tab
-            final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+            final habitProvider =
+                Provider.of<HabitProvider>(context, listen: false);
             habitProvider.loadHabits();
           } else if (index == 2) {
             // Refresh notes when returning to notes tab
-            final noteProvider = Provider.of<NoteProvider>(context, listen: false);
+            final noteProvider =
+                Provider.of<NoteProvider>(context, listen: false);
             noteProvider.loadNotes();
           }
         }
@@ -119,7 +134,10 @@ class _MainNavigationState extends State<MainNavigation> {
               isSelected ? selectedIcon : icon,
               color: isSelected
                   ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.onSurface.withAlpha((0.6 * 255).toInt()),
+                  : Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withAlpha((0.6 * 255).toInt()),
               size: 22,
             ),
             const SizedBox(height: 2),
@@ -130,7 +148,10 @@ class _MainNavigationState extends State<MainNavigation> {
                   fontSize: 11,
                   color: isSelected
                       ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface.withAlpha((0.6 * 255).toInt()),
+                      : Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withAlpha((0.6 * 255).toInt()),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
                 textAlign: TextAlign.center,

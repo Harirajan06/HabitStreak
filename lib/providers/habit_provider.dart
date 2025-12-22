@@ -4,15 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/habit.dart';
 import '../widgets/congratulations_popup.dart';
 import '../services/hive_service.dart';
-// NotificationService and timezone usage removed
 import '../services/admob_service.dart'; // Import AdmobService
+import '../services/widget_service.dart';
 
 class HabitProvider with ChangeNotifier {
   final List<Habit> _habits = [];
-  
+
   bool _isLoading = false;
   String? _errorMessage;
-  final AdmobService _admobService; // Add AdmobService instance
+  final AdmobService _admobService;
+  final WidgetService _widgetService = WidgetService();
 
   List<Habit> get habits => _habits;
   bool get isLoading => _isLoading;
@@ -45,6 +46,13 @@ class HabitProvider with ChangeNotifier {
   }
 
   HabitProvider(this._admobService) {
+    // Listen for widget updates (instant sync)
+    _widgetService.initialize((habitId) {
+      debugPrint(
+          "HabitProvider: Received widget update for $habitId, syncing...");
+      syncWidgetActions(habitId);
+    });
+
     // Update constructor
     loadHabits();
   }
@@ -60,6 +68,8 @@ class HabitProvider with ChangeNotifier {
       _habits.clear();
       _habits.addAll(habits);
       _isLoading = false;
+
+      await syncWidgetActions();
 
       // Only notify if we have a widget tree
       if (WidgetsBinding.instance.isRootWidgetAttached) {
@@ -94,9 +104,8 @@ class HabitProvider with ChangeNotifier {
       _habits.add(habit);
       debugPrint('Habit added successfully: ${habit.id}');
 
-      // Reminder scheduling removed. The `reminderTime` is stored on the habit
-      // but OS-level notification scheduling is currently disabled.
       _admobService.showInterstitialAd(isPremium: isPremium); // Show ad
+      _widgetService.updateWidgetForHabit(habit);
       _requestReview();
     } catch (e) {
       _errorMessage = 'Failed to add habit: $e';
@@ -132,8 +141,7 @@ class HabitProvider with ChangeNotifier {
       if (index != -1) {
         await HiveService.instance.updateHabit(updatedHabit);
         _habits[index] = updatedHabit;
-
-        // Notification cancel/schedule removed for updated habit
+        _widgetService.updateWidgetForHabit(updatedHabit);
       }
     } catch (e) {
       _errorMessage = 'Failed to update habit: $e';
@@ -166,8 +174,8 @@ class HabitProvider with ChangeNotifier {
 
       await HiveService.instance.deleteHabit(id);
       _habits.removeWhere((habit) => habit.id == id);
+      _widgetService.notifyHabitDeleted(id);
 
-      // Notification cancel removed
       _admobService.showInterstitialAd(isPremium: isPremium); // Show ad
     } catch (e) {
       _errorMessage = 'Failed to delete habit: $e';
@@ -208,7 +216,7 @@ class HabitProvider with ChangeNotifier {
         completedDates.add(today);
       }
 
-        debugPrint(
+      debugPrint(
           '✅ Habit "${habit.name}" marked complete ($newCount/${habit.remindersPerDay})');
 
       try {
@@ -221,6 +229,7 @@ class HabitProvider with ChangeNotifier {
         completedDates: completedDates,
         dailyCompletions: newDailyCompletions,
       );
+      _widgetService.updateWidgetForHabit(_habits[index]);
       _admobService.showInterstitialAd(isPremium: isPremium); // Show ad
 
       if (context != null && newCount >= habit.remindersPerDay) {
@@ -238,6 +247,45 @@ class HabitProvider with ChangeNotifier {
     if (activeHabitsList.isEmpty) return false;
 
     return activeHabitsList.every((habit) => habit.isCompletedToday());
+  }
+
+  // Sync actions from widget
+  Future<void> syncWidgetActions([String? specificHabitId]) async {
+    debugPrint(
+        "--- syncWidgetActions Called (Specific ID: $specificHabitId) ---");
+
+    // If we have a specific ID, process it immediately (Instant Sync)
+    if (specificHabitId != null) {
+      await toggleHabitCompletion(specificHabitId);
+      // We don't return here; we still check pending actions just in case
+    }
+
+    try {
+      final pendingActions = await _widgetService.getPendingWidgetActions();
+      debugPrint("--- Pending Actions: $pendingActions ---");
+      if (pendingActions.isNotEmpty) {
+        bool changed = false;
+        for (final habitId in pendingActions) {
+          // Avoid double-toggling if we just did it
+          if (habitId == specificHabitId) continue;
+
+          debugPrint("--- Processing Action for Habit: $habitId ---");
+          final index = _habits.indexWhere((h) => h.id == habitId);
+          if (index != -1) {
+            await toggleHabitCompletion(habitId);
+            changed = true;
+          } else {
+            debugPrint("--- Habit not found for ID: $habitId ---");
+          }
+        }
+        if (changed) notifyListeners();
+        await _widgetService.clearPendingWidgetActions();
+      } else {
+        debugPrint("--- No Pending Actions ---");
+      }
+    } catch (e) {
+      debugPrint('Sync error: $e');
+    }
   }
 
   void _showHabitCompletionPopup(BuildContext context, Habit habit) {

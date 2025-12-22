@@ -3,6 +3,7 @@ import '../models/habit.dart';
 import 'habit_detail_bottom_sheet.dart';
 import 'habit_note_icon_button.dart';
 import 'multi_completion_button.dart';
+import 'marquee_widget.dart';
 
 class HabitProgressCard extends StatelessWidget {
   final Habit habit;
@@ -16,17 +17,16 @@ class HabitProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isCompleted = habit.isCompletedToday();
     final theme = Theme.of(context);
 
     return Container(
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity( 0.2)),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity( 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -50,7 +50,7 @@ class HabitProgressCard extends StatelessWidget {
                   ),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: habit.color.withOpacity( 0.18),
+                      color: habit.color.withOpacity(0.18),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -65,14 +65,15 @@ class HabitProgressCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        habit.name,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: isCompleted
-                                  ? theme.colorScheme.onSurface.withOpacity( 0.45)
-                                  : theme.colorScheme.onSurface,
-                            ),
+                      MarqueeWidget(
+                        child: Text(
+                          habit.name,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          maxLines: 1,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Row(
@@ -82,48 +83,51 @@ class HabitProgressCard extends StatelessWidget {
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: habit.habitType == HabitType.build 
-                                  ? Colors.green 
+                              color: habit.habitType == HabitType.build
+                                  ? Colors.green
                                   : Colors.red,
                               shape: BoxShape.circle,
                             ),
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            habit.habitType == HabitType.build ? 'Build' : 'Break',
+                            habit.habitType == HabitType.build
+                                ? 'Build'
+                                : 'Break',
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: habit.habitType == HabitType.build 
-                                  ? Colors.green 
+                              color: habit.habitType == HabitType.build
+                                  ? Colors.green
                                   : Colors.red,
                             ),
                           ),
                           const SizedBox(width: 12),
                           // Streak Badge
                           ShaderMask(
-                              shaderCallback: (Rect bounds) {
-                                return LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Color(0xFFD0A9F5),
-                                    Color(0xFF9B5DE5),
-                                  ],
-                                ).createShader(bounds);
-                              },
-                              child: const Icon(
-                                Icons.local_fire_department,
-                                size: 12,
-                                color: Colors.white,
-                              ),
+                            shaderCallback: (Rect bounds) {
+                              return LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color(0xFFD0A9F5),
+                                  Color(0xFF9B5DE5),
+                                ],
+                              ).createShader(bounds);
+                            },
+                            child: const Icon(
+                              Icons.local_fire_department,
+                              size: 12,
+                              color: Colors.white,
                             ),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${habit.currentStreak} day streak',
                             style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface.withOpacity( 0.6),
-                                ),
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.6),
+                            ),
                           ),
                         ],
                       ),

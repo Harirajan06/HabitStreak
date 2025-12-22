@@ -3,7 +3,6 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/pin_auth_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -43,10 +42,6 @@ void main() async {
     debugPrint('⚠️ Ads unavailable: $e');
   }
 
-  // Notification initialization removed. Re-add notification initialization
-  // later if you want push/local reminders. Currently the app uses Hive
-  // for local storage and does not schedule OS-level notifications.
-
   // Initialize purchase service (in-app purchases) and attempt restore
   try {
     await PurchaseService.instance.init();
@@ -70,71 +65,108 @@ void main() async {
   final String? pinHash = await secureStorage.read(key: 'pin_hash');
   final bool pinRequired = pinHash != null;
 
-  runApp(StreaklyApp(pinRequired: pinRequired));
+  final admobService = AdmobService();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider.value(value: admobService),
+        ChangeNotifierProvider(create: (_) => AuthProvider(admobService)),
+        ChangeNotifierProvider(create: (_) => HabitProvider(admobService)),
+        ChangeNotifierProvider(create: (_) => NoteProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: StreaklyApp(pinRequired: pinRequired),
+    ),
+  );
 }
 
-class StreaklyApp extends StatefulWidget {
+class StreaklyApp extends StatelessWidget {
   final bool pinRequired;
   const StreaklyApp({super.key, this.pinRequired = false});
 
   @override
-  State<StreaklyApp> createState() => _StreaklyAppState();
-}
-
-class _StreaklyAppState extends State<StreaklyApp> {
-  final AdmobService _admobService = AdmobService();
-
-  @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider.value(value: _admobService),
-        ChangeNotifierProvider(create: (_) => AuthProvider(_admobService)),
-        ChangeNotifierProvider(create: (_) => HabitProvider(_admobService)),
-        ChangeNotifierProvider(create: (_) => NoteProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ],
-      child: MaterialApp(
-        title: 'Streakly - Habit Tracker',
-        debugShowCheckedModeBanner: false,
-        // DevicePreview removed — using default locale and builder
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF9B5DE5), // Bright Purple
-            secondary: Color(0xFF9B5DE5),
-            surface: Color(0xFF121212),
+    return MaterialApp(
+      title: 'Streakly - Habit Tracker',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF9B5DE5), // Bright Purple
+          secondary: Color(0xFF9B5DE5),
+          surface: Color(0xFF121212),
+        ),
+        textTheme: GoogleFonts.interTextTheme(
+          ThemeData.dark().textTheme,
+        ),
+        appBarTheme: AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          titleTextStyle: GoogleFonts.inter(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
           ),
-          textTheme: GoogleFonts.interTextTheme(
-            ThemeData.dark().textTheme,
-          ),
-          appBarTheme: AppBarTheme(
-            centerTitle: true,
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            titleTextStyle: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          cardTheme: const CardTheme(
-            elevation: 2,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(16)),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
-        home: widget.pinRequired ? const PinAuthScreen() : SplashScreen(),
+        cardTheme: const CardTheme(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
+        ),
       ),
+      home: StreaklyLogicWrapper(pinRequired: pinRequired),
     );
+  }
+}
+
+class StreaklyLogicWrapper extends StatefulWidget {
+  final bool pinRequired;
+  const StreaklyLogicWrapper({super.key, this.pinRequired = false});
+
+  @override
+  State<StreaklyLogicWrapper> createState() => _StreaklyLogicWrapperState();
+}
+
+class _StreaklyLogicWrapperState extends State<StreaklyLogicWrapper>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      debugPrint("App Resumed - Syncing Widget Actions");
+      // Delay slightly to ensure provider is ready if needed, though usually safe immediately
+      Future.delayed(Duration.zero, () {
+        if (mounted) {
+          Provider.of<HabitProvider>(context, listen: false).loadHabits();
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.pinRequired ? const PinAuthScreen() : SplashScreen();
   }
 }
