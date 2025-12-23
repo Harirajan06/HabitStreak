@@ -87,45 +87,91 @@ class StreaklyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Streakly - Habit Tracker',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF9B5DE5), // Bright Purple
-          secondary: Color(0xFF9B5DE5),
-          surface: Color(0xFF121212),
-        ),
-        textTheme: GoogleFonts.interTextTheme(
-          ThemeData.dark().textTheme,
-        ),
-        appBarTheme: AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          titleTextStyle: GoogleFonts.inter(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Streakly - Habit Tracker',
+          debugShowCheckedModeBanner: false,
+          themeMode: themeProvider.themeMode,
+          theme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.light,
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF9B5DE5), // Bright Purple
+              secondary: Color(0xFF9B5DE5),
+              surface: Color(0xFFF5F5F7), // Light Gray/White
+              onSurface: Colors.black87,
+            ),
+            textTheme: GoogleFonts.interTextTheme(
+              ThemeData.light().textTheme,
+            ),
+            appBarTheme: AppBarTheme(
+              centerTitle: true,
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              titleTextStyle: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+              iconTheme: const IconThemeData(color: Colors.black87),
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            cardTheme: const CardTheme(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
             ),
           ),
-        ),
-        cardTheme: const CardTheme(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(16)),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.dark,
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF9B5DE5), // Bright Purple
+              secondary: Color(0xFF9B5DE5),
+              surface: Color(0xFF121212),
+            ),
+            textTheme: GoogleFonts.interTextTheme(
+              ThemeData.dark().textTheme,
+            ),
+            appBarTheme: AppBarTheme(
+              centerTitle: true,
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              titleTextStyle: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            cardTheme: const CardTheme(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
+            ),
           ),
-        ),
-      ),
-      home: StreaklyLogicWrapper(pinRequired: pinRequired),
+          home: StreaklyLogicWrapper(pinRequired: pinRequired),
+        );
+      },
     );
   }
 }

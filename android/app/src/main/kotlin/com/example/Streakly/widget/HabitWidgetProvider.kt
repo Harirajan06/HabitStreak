@@ -129,7 +129,7 @@ class HabitWidgetProvider : AppWidgetProvider() {
             val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
             val canvas = android.graphics.Canvas(bitmap)
             val center = size / 2f
-            val radius = (size - 12f) / 2f // Adjust for stroke width
+            val radius = (size - 22f) / 2f // Adjust for stroke width (20f) + padding
 
             val paint = android.graphics.Paint().apply {
                 isAntiAlias = true

@@ -52,23 +52,23 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkAuthAndNavigate() async {
     // Wait for splash animation
     await Future.delayed(const Duration(seconds: 3));
-    
+
     if (!mounted) return;
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-      
+
       // Initialize saved view mode preference
       try {
         await NavigationService.initializeViewMode();
       } catch (e) {
         debugPrint('⚠️ NavigationService init failed: $e');
       }
-      
+
       // Give auth provider extra time to initialize if needed
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       if (!mounted) return;
 
       // Try to load and show ad (may fail on web)
@@ -80,7 +80,7 @@ class _SplashScreenState extends State<SplashScreen>
       } catch (e) {
         debugPrint('⚠️ AdMob not available: $e');
       }
-      
+
       if (!mounted) return;
 
       if (!hasSeenOnboarding) {
@@ -122,8 +122,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: theme.colorScheme.surface,
       body: Center(
         child: AnimatedBuilder(
           animation: _animationController,
@@ -146,7 +148,7 @@ class _SplashScreenState extends State<SplashScreen>
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: theme.colorScheme.onSurface,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -155,7 +157,8 @@ class _SplashScreenState extends State<SplashScreen>
                       'Build Better Habits',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.white.withAlpha((0.8 * 255).round()),
+                        color: theme.colorScheme.onSurface
+                            .withAlpha((0.6 * 255).round()),
                         letterSpacing: 0.5,
                       ),
                     ),

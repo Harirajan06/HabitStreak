@@ -202,6 +202,29 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       dailyCompletions: widget.habitToEdit?.dailyCompletions ?? {},
     );
 
+    // Re-evaluate completion status for today
+    // If we increased remindersPerDay, a previously "completed" habit might now be incomplete
+    final today = DateTime.now();
+    final todayKey =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final currentCount = habit.dailyCompletions[todayKey] ?? 0;
+
+    if (currentCount < habit.remindersPerDay) {
+      habit.completedDates.removeWhere((date) =>
+          date.year == today.year &&
+          date.month == today.month &&
+          date.day == today.day);
+    } else {
+      // Should already be there, but just in case logic flipped the other way (decreased reminders)
+      bool exists = habit.completedDates.any((date) =>
+          date.year == today.year &&
+          date.month == today.month &&
+          date.day == today.day);
+      if (!exists) {
+        habit.completedDates.add(today);
+      }
+    }
+
     final isPremium =
         authProvider.currentUser?.premium ?? false; // Check premium status
 

@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/habit_provider.dart';
 import '../../providers/note_provider.dart';
+import '../../providers/theme_provider.dart'; // Import ThemeProvider
 import '../../models/habit.dart';
 import '../../services/export_import_service.dart';
 import '../../widgets/modern_button.dart';
@@ -327,6 +328,41 @@ class ProfileScreen extends StatelessWidget {
               iconColor: Colors.blueAccent,
               onTap: () {
                 _showNotificationSettingsDialog(context);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildMenuCard(
+          context,
+          [
+            Consumer<ThemeProvider>(
+              builder: (context, themeProvider, child) {
+                return _buildMenuItem(
+                  context,
+                  title: 'Dark Mode',
+                  subtitle: 'Toggle app theme',
+                  icon: themeProvider.isDarkMode
+                      ? Icons.dark_mode
+                      : Icons.light_mode,
+                  iconColor: themeProvider.isDarkMode
+                      ? Colors.purpleAccent
+                      : Colors.orangeAccent,
+                  onTap: () {
+                    final newMode = themeProvider.isDarkMode
+                        ? ThemeMode.light
+                        : ThemeMode.dark;
+                    themeProvider.setThemeMode(newMode);
+                  },
+                  trailing: Switch(
+                    value: themeProvider.isDarkMode,
+                    activeColor: const Color(0xFF9B5DE5),
+                    onChanged: (value) {
+                      final newMode = value ? ThemeMode.dark : ThemeMode.light;
+                      themeProvider.setThemeMode(newMode);
+                    },
+                  ),
+                );
               },
             ),
           ],
