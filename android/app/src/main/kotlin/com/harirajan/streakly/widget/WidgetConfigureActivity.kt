@@ -1,6 +1,6 @@
-package com.example.Streakly.widget
+package com.harirajan.streakly.widget
 
-import com.example.Streakly.R
+import com.harirajan.streakly.R
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Intent

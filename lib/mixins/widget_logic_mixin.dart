@@ -9,7 +9,7 @@ import '../screens/widgets/habit_selection_screen.dart';
 /// 2. Checks on startup if the app was launched to configure a widget.
 mixin WidgetLogicMixin<T extends StatefulWidget> on State<T> {
   static const MethodChannel _widgetChannel =
-      MethodChannel('com.example.Streakly/widget');
+      MethodChannel('com.harirajan.streakly/widget');
 
   @override
   void initState() {
@@ -17,6 +17,17 @@ mixin WidgetLogicMixin<T extends StatefulWidget> on State<T> {
     if (this is WidgetsBindingObserver) {
       WidgetsBinding.instance.addObserver(this as WidgetsBindingObserver);
     }
+
+    // Listen for widget configuration triggers from native side
+    _widgetChannel.setMethodCallHandler((call) async {
+      if (call.method == 'triggerWidgetConfig') {
+        debugPrint('--- Received triggerWidgetConfig from native ---');
+        if (mounted) {
+          _checkWidgetConfiguration();
+        }
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkWidgetConfiguration();
       // Also sync immediately when this screen loads (post-splash)
@@ -40,6 +51,7 @@ mixin WidgetLogicMixin<T extends StatefulWidget> on State<T> {
       debugPrint("--- APP RESUMED (Mixin): Syncing Widget Actions ---");
       if (mounted) {
         Provider.of<HabitProvider>(context, listen: false).syncWidgetActions();
+        _checkWidgetConfiguration();
       }
     }
   }
@@ -54,17 +66,31 @@ mixin WidgetLogicMixin<T extends StatefulWidget> on State<T> {
         if (mode && appWidgetId != -1) {
           debugPrint(
               "--- Widget Configuration Mode Detected for ID: $appWidgetId ---");
-          if (!mounted) return;
+          if (!mounted) {
+            debugPrint("--- Context not mounted, aborting navigation ---");
+            return;
+          }
 
           final habitProvider =
               Provider.of<HabitProvider>(context, listen: false);
           // If habits are not loaded yet, wait a moment
           if (habitProvider.habits.isEmpty) {
+            debugPrint("--- Habits empty, forcing load... ---");
             await habitProvider.loadHabits();
+            debugPrint(
+                "--- Habits loaded. Count: ${habitProvider.habits.length} ---");
+          } else {
+            debugPrint(
+                "--- Habits already loaded. Count: ${habitProvider.habits.length} ---");
           }
 
-          if (!mounted) return;
+          if (!mounted) {
+            debugPrint(
+                "--- Context not mounted after load, aborting navigation ---");
+            return;
+          }
 
+          debugPrint("--- Navigating to HabitSelectionScreen... ---");
           // Navigate to Selection Screen
           Navigator.of(context).push(
             MaterialPageRoute(

@@ -72,9 +72,15 @@ void main() async {
       providers: [
         Provider.value(value: admobService),
         ChangeNotifierProvider(create: (_) => AuthProvider(admobService)),
-        ChangeNotifierProvider(create: (_) => HabitProvider(admobService)),
-        ChangeNotifierProvider(create: (_) => NoteProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProxyProvider<ThemeProvider, HabitProvider>(
+          create: (_) => HabitProvider(admobService),
+          update: (_, themeProvider, habitProvider) {
+            habitProvider!.updateTheme(themeProvider.isDarkMode);
+            return habitProvider;
+          },
+        ),
+        ChangeNotifierProvider(create: (_) => NoteProvider()),
       ],
       child: StreaklyApp(pinRequired: pinRequired),
     ),

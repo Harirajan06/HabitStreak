@@ -1,10 +1,10 @@
-package com.example.Streakly.widget
+package com.harirajan.streakly.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.widget.RemoteViews
-import com.example.Streakly.R
+import com.harirajan.streakly.R
 import android.app.PendingIntent
 import android.content.Intent
 
@@ -69,12 +69,26 @@ class HabitWidgetProvider : AppWidgetProvider() {
                     val iconBase64 = habitData.optString("iconBase64", "")
                     val remindersPerDay = habitData.optInt("remindersPerDay", 1)
                     val dailyCompletions = habitData.optInt("dailyCompletions", 0)
+                    val isDarkMode = habitData.optBoolean("isDarkMode", true)
+
+                    // Theme Logic
+                    if (isDarkMode) {
+                        views.setInt(R.id.widget_root, "setBackgroundResource", R.drawable.widget_background)
+                        views.setTextColor(R.id.tv_habit_name, android.graphics.Color.WHITE)
+                        views.setTextColor(R.id.tv_habit_status, android.graphics.Color.parseColor("#CCCCCC"))
+                        views.setTextColor(R.id.tv_header, android.graphics.Color.parseColor("#888888"))
+                    } else {
+                        views.setInt(R.id.widget_root, "setBackgroundResource", R.drawable.widget_background_light)
+                        views.setTextColor(R.id.tv_habit_name, android.graphics.Color.BLACK)
+                        views.setTextColor(R.id.tv_habit_status, android.graphics.Color.parseColor("#444444"))
+                        views.setTextColor(R.id.tv_header, android.graphics.Color.parseColor("#888888"))
+                    }
 
                     views.setTextViewText(R.id.tv_habit_name, name)
                     views.setTextViewText(R.id.tv_habit_status, "$streak day streak")
                     
                     // Draw Progress Ring
-                    val progressBitmap = drawProgressBitmap(context, 200, color, dailyCompletions, remindersPerDay, isCompleted)
+                    val progressBitmap = drawProgressBitmap(context, 200, color, dailyCompletions, remindersPerDay, isCompleted, isDarkMode)
                     views.setImageViewBitmap(R.id.img_ring, progressBitmap)
                     // Reset any color filter that might interfere
                     views.setInt(R.id.img_ring, "setColorFilter", 0)
@@ -124,7 +138,8 @@ class HabitWidgetProvider : AppWidgetProvider() {
             color: Int,
             currentCount: Int,
             totalRequired: Int,
-            isCompleted: Boolean
+            isCompleted: Boolean,
+            isDarkMode: Boolean
         ): android.graphics.Bitmap {
             val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
             val canvas = android.graphics.Canvas(bitmap)
@@ -139,10 +154,10 @@ class HabitWidgetProvider : AppWidgetProvider() {
                 strokeWidth = 20f
             }
 
-            // Draw greyish background ring (optional, but good for visibility)
+            // Draw background ring (theme aware)
             val bgPaint = android.graphics.Paint().apply {
                  isAntiAlias = true
-                 this.color = android.graphics.Color.parseColor("#33FFFFFF") 
+                 this.color = if (isDarkMode) android.graphics.Color.parseColor("#33FFFFFF") else android.graphics.Color.parseColor("#1A000000")
                  style = android.graphics.Paint.Style.STROKE
                  strokeWidth = 20f
             }

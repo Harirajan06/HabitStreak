@@ -6,7 +6,7 @@ import '../utils/icon_renderer.dart';
 
 class WidgetService {
   static const MethodChannel _channel =
-      MethodChannel('com.example.Streakly/widget');
+      MethodChannel('com.harirajan.streakly/widget');
 
   /// Initialize listener for updates from native side
   void initialize(Function(String) onWidgetAction) {
@@ -20,8 +20,10 @@ class WidgetService {
   }
 
   /// Helper to add icon image data to the habit JSON
-  Future<Map<String, dynamic>> _enrichHabitData(Habit habit) async {
+  Future<Map<String, dynamic>> _enrichHabitData(Habit habit,
+      {bool isDarkMode = true}) async {
     final Map<String, dynamic> data = habit.toWidgetJson();
+    data['isDarkMode'] = isDarkMode; // Inject theme
     try {
       final Uint8List? iconBytes = await IconRenderer.renderIconToPng(
         habit.icon,
@@ -39,9 +41,11 @@ class WidgetService {
   }
 
   /// Set the mapping for a specific widget instance to a habit
-  Future<void> setWidgetMapping(int appWidgetId, Habit habit) async {
+  Future<void> setWidgetMapping(int appWidgetId, Habit habit,
+      {bool isDarkMode = true}) async {
     try {
-      final enrichedData = await _enrichHabitData(habit);
+      final enrichedData =
+          await _enrichHabitData(habit, isDarkMode: isDarkMode);
       await _channel.invokeMethod('setWidgetMapping', {
         'appWidgetId': appWidgetId,
         'habit': jsonEncode(enrichedData),
@@ -52,9 +56,11 @@ class WidgetService {
   }
 
   /// Update all widgets mapped to this habit
-  Future<void> updateWidgetForHabit(Habit habit) async {
+  Future<void> updateWidgetForHabit(Habit habit,
+      {bool isDarkMode = true}) async {
     try {
-      final enrichedData = await _enrichHabitData(habit);
+      final enrichedData =
+          await _enrichHabitData(habit, isDarkMode: isDarkMode);
       await _channel.invokeMethod('updateWidgetForHabit', {
         'habitId': habit.id,
         'habit': jsonEncode(enrichedData),
@@ -111,14 +117,21 @@ class WidgetService {
   Future<void> finishWithSelectedHabit(
       int appWidgetId, String habitId, Habit habit) async {
     try {
+      debugPrint(
+          '🔵 finishWithSelectedHabit called: appWidgetId=$appWidgetId, habitId=$habitId, habitName=${habit.name}');
+
       final enrichedData = await _enrichHabitData(habit);
+      debugPrint('🔵 Enriched data prepared, calling native method...');
+
       await _channel.invokeMethod('finishWithSelectedHabit', {
         'habitId': habit.id,
         'habit': jsonEncode(enrichedData),
         'appWidgetId': appWidgetId,
       });
+
+      debugPrint('✅ finishWithSelectedHabit completed successfully');
     } catch (e) {
-      debugPrint('Error finishing widget configuration: $e');
+      debugPrint('❌ Error finishing widget configuration: $e');
     }
   }
 }

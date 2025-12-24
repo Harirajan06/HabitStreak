@@ -1,4 +1,4 @@
-package com.example.Streakly
+package com.harirajan.streakly
 
 import android.appwidget.AppWidgetManager
 import android.content.Intent
@@ -6,8 +6,8 @@ import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import com.example.Streakly.widget.HabitWidgetProvider
-import com.example.Streakly.widget.WidgetStorage
+import com.harirajan.streakly.widget.HabitWidgetProvider
+import com.harirajan.streakly.widget.WidgetStorage
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "com.example.Streakly/widget"

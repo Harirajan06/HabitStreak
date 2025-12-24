@@ -1,4 +1,4 @@
-package com.example.Streakly.widget
+package com.harirajan.streakly.widget
 
 import android.content.Context
 import org.json.JSONObject

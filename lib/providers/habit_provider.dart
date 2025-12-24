@@ -45,6 +45,18 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
     return completedTodayCount / activeHabits.length;
   }
 
+  bool _isDarkMode = true;
+
+  void updateTheme(bool isDark) {
+    if (_isDarkMode != isDark) {
+      _isDarkMode = isDark;
+      // Refresh all widgets with new theme
+      for (final habit in _habits) {
+        _widgetService.updateWidgetForHabit(habit, isDarkMode: _isDarkMode);
+      }
+    }
+  }
+
   HabitProvider(this._admobService) {
     // Listen for lifecycle changes to sync widget actions on resume
     WidgetsBinding.instance.addObserver(this);
@@ -90,7 +102,7 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
 
       // Refresh all widgets to ensure native cache has latest remindersPerDay/data
       for (final habit in _habits) {
-        _widgetService.updateWidgetForHabit(habit);
+        _widgetService.updateWidgetForHabit(habit, isDarkMode: _isDarkMode);
       }
 
       // Only notify if we have a widget tree
@@ -127,7 +139,7 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
       debugPrint('Habit added successfully: ${habit.id}');
 
       _admobService.showInterstitialAd(isPremium: isPremium); // Show ad
-      _widgetService.updateWidgetForHabit(habit);
+      _widgetService.updateWidgetForHabit(habit, isDarkMode: _isDarkMode);
       _requestReview();
     } catch (e) {
       _errorMessage = 'Failed to add habit: $e';
@@ -163,7 +175,8 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
       if (index != -1) {
         await HiveService.instance.updateHabit(updatedHabit);
         _habits[index] = updatedHabit;
-        _widgetService.updateWidgetForHabit(updatedHabit);
+        _widgetService.updateWidgetForHabit(updatedHabit,
+            isDarkMode: _isDarkMode);
       }
     } catch (e) {
       _errorMessage = 'Failed to update habit: $e';
@@ -252,7 +265,8 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
         completedDates: completedDates,
         dailyCompletions: newDailyCompletions,
       );
-      _widgetService.updateWidgetForHabit(_habits[index]);
+      _widgetService.updateWidgetForHabit(_habits[index],
+          isDarkMode: _isDarkMode);
 
       // Show ad only on increments, not resets?
       if (newCount > currentCount) {

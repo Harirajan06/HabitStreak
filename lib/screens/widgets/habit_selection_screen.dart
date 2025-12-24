@@ -1,13 +1,86 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/habit_provider.dart';
-import 'package:flutter/services.dart';
 import '../../services/widget_service.dart';
+import '../habits/add_habit_screen.dart';
 
-class HabitSelectionScreen extends StatelessWidget {
+class HabitSelectionScreen extends StatefulWidget {
   final int appWidgetId;
 
   const HabitSelectionScreen({super.key, required this.appWidgetId});
+
+  @override
+  State<HabitSelectionScreen> createState() => _HabitSelectionScreenState();
+}
+
+class _HabitSelectionScreenState extends State<HabitSelectionScreen> {
+  bool _hasNavigatedToCreate = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check if we need to navigate to create habit screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndNavigateToCreate();
+    });
+  }
+
+  Future<void> _checkAndNavigateToCreate() async {
+    if (_hasNavigatedToCreate) return;
+
+    final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+
+    if (habitProvider.habits.isEmpty) {
+      _hasNavigatedToCreate = true;
+      debugPrint("--- No habits found, navigating to AddHabitScreen ---");
+
+      // Navigate to AddHabitScreen
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const AddHabitScreen(),
+        ),
+      );
+
+      // If user created a habit, map it to the widget
+      if (result == true && mounted) {
+        // Reload habits to get the newly created one
+        await habitProvider.loadHabits();
+
+        if (habitProvider.habits.isNotEmpty && mounted) {
+          // Get the most recently created habit (last in list)
+          final newHabit = habitProvider.habits.last;
+
+          debugPrint(
+              "--- Auto-mapping newly created habit: ${newHabit.name} ---");
+
+          // Finish configuration with the new habit
+          await WidgetService().finishWithSelectedHabit(
+            widget.appWidgetId,
+            newHabit.id,
+            newHabit,
+          );
+
+          // Close this screen
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        } else {
+          // No habit was created, close configuration
+          debugPrint("--- No habit created, closing configuration ---");
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        }
+      } else {
+        // User cancelled, close configuration
+        debugPrint(
+            "--- User cancelled habit creation, closing configuration ---");
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,23 +91,9 @@ class HabitSelectionScreen extends StatelessWidget {
       body: Consumer<HabitProvider>(
         builder: (context, habitProvider, child) {
           if (habitProvider.habits.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("No habits found"),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Finish with empty to cancel/exit
-                      SystemNavigator.pop();
-                      // If we are deep in nav, maybe we shouldn't pop app?
-                      // Native side will finish activity.
-                    },
-                    child: const Text("Close"),
-                  ),
-                ],
-              ),
+            // Show loading indicator while navigating
+            return const Center(
+              child: CircularProgressIndicator(),
             );
           }
 
@@ -50,27 +109,19 @@ class HabitSelectionScreen extends StatelessWidget {
                   child: Icon(habit.icon, color: Colors.white),
                 ),
                 onTap: () async {
-                  // Call native method
+                  debugPrint("--- Selected habit: ${habit.name} ---");
+
+                  // Call native method to finish configuration
                   await WidgetService().finishWithSelectedHabit(
-                    appWidgetId,
+                    widget.appWidgetId,
                     habit.id,
                     habit,
                   );
-                  // The native activity will finish, which should bring us back?
-                  // Actually, WidgetConfigureActivity launched MainActivity.
-                  // If MainActivity finishes, the app closes?
-                  // No, WidgetConfigureActivity started MainActivity with startActivityForResult (maybe?) or just startActivity?
-                  // Wait, check HabitWidgetProvider.
-                  // It calls `WidgetConfigureActivity`.
-                  // `WidgetConfigureActivity` calls `MainActivity`.
-                  // `MainActivity` calls `finishWithSelectedHabit`.
-                  // `MainActivity` sets result and finishes.
-                  // So YES, the app activity will close.
-                  // But wait, the user is in the app.
-                  // If we are in the app normally, we don't want to close the app?
-                  // `getWidgetConfig` returns mode=true ONLY if launched via intent?
-                  // Yes.
-                  // So closing the app is correct behavior for the configuration flow.
+
+                  // Close the selection screen
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                  }
                 },
               );
             },

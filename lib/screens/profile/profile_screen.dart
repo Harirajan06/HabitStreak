@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart'; // This is still needed for sharing
 import 'package:url_launcher/url_launcher.dart';
@@ -17,7 +18,6 @@ import '../auth/splash_screen.dart';
 import 'analysis_screen.dart';
 import '../subscription/subscription_plans_screen.dart';
 import '../../widgets/hero_stats_card.dart';
-import '../reminders/test_notification_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -322,12 +322,12 @@ class ProfileScreen extends StatelessWidget {
           [
             _buildMenuItem(
               context,
-              title: 'Notification Settings',
-              subtitle: 'Test and manage your habit reminders',
-              icon: Icons.notifications_active,
-              iconColor: Colors.blueAccent,
+              title: 'Reset Widget Configuration',
+              subtitle: 'Clear widget habit selection',
+              icon: Icons.widgets_outlined,
+              iconColor: Colors.orangeAccent,
               onTap: () {
-                _showNotificationSettingsDialog(context);
+                _showResetWidgetDialog(context);
               },
             ),
           ],
@@ -1317,7 +1317,7 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  void _showNotificationSettingsDialog(BuildContext context) {
+  void _showResetWidgetDialog(BuildContext context) {
     final theme = Theme.of(context);
     showDialog(
       context: context,
@@ -1328,74 +1328,28 @@ class ProfileScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.1),
+                color: Colors.orangeAccent.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
-                Icons.notifications_active,
-                color: Colors.blueAccent,
+                Icons.widgets_outlined,
+                color: Colors.orangeAccent,
               ),
             ),
             const SizedBox(width: 12),
-            const Text('Notification Settings'),
+            const Text('Reset Widget'),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.bug_report, color: Colors.blue),
-              ),
-              title: const Text('Test Notifications'),
-              subtitle: const Text('Debug and test notification system'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const TestNotificationScreen(),
-                  ),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Color(0xFF9B5DE5).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.schedule, color: Color(0xFF9B5DE5)),
-              ),
-              title: const Text('Scheduled Reminders'),
-              subtitle: Consumer<HabitProvider>(
-                builder: (context, habitProvider, child) {
-                  final habitsWithReminders = habitProvider.activeHabits
-                      .where((h) => h.reminderTimes.isNotEmpty)
-                      .length;
-                  return Text(
-                      '$habitsWithReminders habit(s) have reminders set');
-                },
-              ),
-              trailing: const Icon(Icons.info_outline, size: 16),
-            ),
-            const Divider(),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'You can set reminders when creating or editing habits. Each habit can have its own custom reminder time.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-                textAlign: TextAlign.center,
+            const Icon(Icons.refresh, color: Colors.orangeAccent, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              'This will clear the current widget configuration. The next time you add a widget, it will show "+ Add Habit".',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
           ],
@@ -1403,7 +1357,42 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              // Clear widget configuration via platform channel
+              try {
+                const platform = MethodChannel('com.harirajan.streakly/widget');
+                await platform.invokeMethod('clearWidgetConfig');
+
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Widget configuration cleared!'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              } catch (e) {
+                debugPrint('Error clearing widget config: $e');
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to clear widget configuration'),
+                      backgroundColor: Colors.red,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              }
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.orangeAccent,
+            ),
+            child: const Text('Reset'),
           ),
         ],
       ),

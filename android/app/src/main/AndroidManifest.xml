@@ -78,7 +78,7 @@
         <!-- Update receiver for widget button clicks (delegates to WorkManager) -->
         <receiver android:name=".widget.WidgetUpdateReceiver" android:exported="true">
             <intent-filter>
-                <action android:name="com.example.Streakly.widget.ACTION_COMPLETE" />
+                <action android:name="com.harirajan.streakly.widget.ACTION_COMPLETE" />
             </intent-filter>
         </receiver>
 

@@ -257,12 +257,12 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
     if (!isEditing && habitProvider.activeHabits.length == 2) {
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true); // Return true to indicate success
         _showReviewDialog(context);
       }
     } else {
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true); // Return true to indicate success
       }
     }
   }

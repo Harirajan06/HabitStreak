@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.Streakly"
+    namespace = "com.harirajan.streakly"
     // Ensure compileSdk is at least 35 as required by newer notification behavior
     compileSdk = 35
     ndkVersion = "27.0.12077973"

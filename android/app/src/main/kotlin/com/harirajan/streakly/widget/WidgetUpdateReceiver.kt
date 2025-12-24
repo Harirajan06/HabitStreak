@@ -1,6 +1,6 @@
-package com.example.Streakly.widget
+package com.harirajan.streakly.widget
 
-import com.example.Streakly.MainActivity
+import com.harirajan.streakly.MainActivity
 
 import android.content.BroadcastReceiver
 import android.content.Context

@@ -229,8 +229,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () => HabitDetailBottomSheet.show(context, habit),
-          onLongPress: () =>
-              _showDeleteConfirmationDialog(habit), // Add long-press for delete
+          onLongPress: () => _showHabitOptionsMenu(habit),
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -465,6 +464,174 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
     }
 
     return streak;
+  }
+
+  void _showHabitOptionsMenu(Habit habit) {
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12, bottom: 20),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurface
+                      .withAlpha((0.3 * 255).round()),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text(
+                habit.name,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.widgets_outlined,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                title: const Text('Show Widget ID'),
+                subtitle: const Text('Copy ID to configure widget'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showWidgetIdDialog(habit);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.red,
+                  ),
+                ),
+                title: const Text('Delete Habit'),
+                subtitle: const Text('Remove this habit permanently'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmationDialog(habit);
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showWidgetIdDialog(Habit habit) {
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.widgets, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Widget ID'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Use this ID to configure your widget:',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SelectableText(
+                      habit.id,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy, size: 20),
+                    onPressed: () {
+                      // Copy to clipboard
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Widget ID copied to clipboard!'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    tooltip: 'Copy ID',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'How to use:',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '1. Long-press the widget on your home screen\n'
+              '2. Tap "Edit Widget"\n'
+              '3. Paste this ID in the "Habit ID" field',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showDeleteConfirmationDialog(Habit habit) {
