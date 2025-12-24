@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'habits/habit_grid_screen.dart';
 import 'notes/notes_screen.dart';
 import 'habits/add_habit_screen.dart';
+import 'profile/analysis_screen.dart';
+import 'mood/mood_tracker_screen.dart';
 import '../services/navigation_service.dart';
 import '../mixins/widget_logic_mixin.dart';
 
@@ -70,6 +72,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         allowImplicitScrolling: false,
         children: const [
           HabitGridScreen(),
+          AnalysisScreen(),
+          MoodTrackerScreen(),
           NotesScreen(),
         ],
       ),
@@ -133,10 +137,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
                 Expanded(
                     child: _buildNavItem(0, Icons.track_changes_outlined,
                         Icons.track_changes, 'Habits')),
+                Expanded(
+                    child: _buildNavItem(1, Icons.bar_chart,
+                        Icons.bar_chart_rounded, 'Analysis')),
                 const SizedBox(width: 60), // Space for FAB
                 Expanded(
                     child: _buildNavItem(
-                        1, Icons.note_outlined, Icons.note, 'Notes')),
+                        2, Icons.mood_outlined, Icons.mood, 'Mood')),
+                Expanded(
+                    child: _buildNavItem(
+                        3, Icons.note_outlined, Icons.note, 'Notes')),
               ],
             ),
           ),
@@ -151,7 +161,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     return GestureDetector(
       onTap: () => _onTabTapped(index),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,

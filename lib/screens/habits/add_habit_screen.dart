@@ -323,17 +323,25 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Basic Information',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          'What do you want to achieve?',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
         ),
-        const SizedBox(height: 16),
-        _buildTextFieldCard(
+        const SizedBox(height: 8),
+        Text(
+          'Start small, consistency is key.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: 24),
+        _buildModernTextField(
           controller: _nameController,
           label: 'Habit Name',
-          hint: 'e.g., Drink Water, Exercise, Read',
-          maxLines: 1,
+          hint: 'e.g., Drink Water',
+          icon: Icons.edit_outlined,
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
               return 'Please enter a habit name';
@@ -342,17 +350,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           },
         ),
         const SizedBox(height: 16),
-        _buildTextFieldCard(
+        _buildModernTextField(
           controller: _descriptionController,
-          label: 'Description',
-          hint: 'What does this habit involve?',
+          label: 'Description (Optional)',
+          hint: 'Why do you want to build this habit?',
+          icon: Icons.notes_outlined,
           maxLines: 3,
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Please enter a description';
-            }
-            return null;
-          },
+          validator: (value) => null,
         ),
       ],
     );
@@ -362,31 +366,47 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Choose an Icon',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            'Icon',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
         ),
         const SizedBox(height: 12),
         Container(
           width: double.infinity,
-          height: 200,
+          constraints: const BoxConstraints(maxHeight: 260),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
-                color: Theme.of(context)
-                    .colorScheme
-                    .outline
-                    .withAlpha((0.2 * 255).round())),
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: _availableIcons.map((icon) {
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: GridView.builder(
+              padding: const EdgeInsets.all(20),
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 60,
+                childAspectRatio: 1,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: _availableIcons.length,
+              itemBuilder: (context, index) {
+                final icon = _availableIcons[index];
                 final isSelected = icon == _selectedIcon;
                 return GestureDetector(
                   onTap: () {
@@ -395,62 +415,32 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     });
                   },
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: 56,
-                    height: 56,
-                    padding: const EdgeInsets.all(6),
+                    duration: const Duration(milliseconds: 200),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withAlpha((0.18 * 255).round())
-                          : Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.white.withAlpha((0.06 * 255).round()),
-                        width: isSelected ? 2 : 1,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primary
-                                    .withAlpha((0.35 * 255).round()),
-                                blurRadius: 16,
-                                offset: const Offset(0, 8),
-                              ),
-                            ]
-                          : null,
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                      border: isSelected
+                          ? null
+                          : Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outline
+                                  .withOpacity(0.1),
+                              width: 1,
+                            ),
                     ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withAlpha((0.25 * 255).round())
-                            : Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 24,
-                        color: isSelected
-                            ? Colors.white
-                            : Colors.white.withAlpha((0.7 * 255).round()),
-                      ),
+                    child: Icon(
+                      icon,
+                      size: 24,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 );
-              }).toList(),
+              },
             ),
           ),
         ),
@@ -462,31 +452,47 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Choose a Color',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            'Color',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
         ),
         const SizedBox(height: 12),
         Container(
           width: double.infinity,
-          height: 120,
+          constraints: const BoxConstraints(maxHeight: 200),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
-                color: Theme.of(context)
-                    .colorScheme
-                    .outline
-                    .withAlpha((0.2 * 255).round())),
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: _availableColors.map((color) {
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: GridView.builder(
+              padding: const EdgeInsets.all(20),
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 50,
+                childAspectRatio: 1,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: _availableColors.length,
+              itemBuilder: (context, index) {
+                final color = _availableColors[index];
                 final isSelected = color == _selectedColor;
                 return GestureDetector(
                   onTap: () {
@@ -495,43 +501,36 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     });
                   },
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: 52,
-                    height: 52,
-                    padding: const EdgeInsets.all(6),
+                    duration: const Duration(milliseconds: 200),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withAlpha((0.2 * 255).round())
-                          : Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.white.withAlpha((0.06 * 255).round()),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: isSelected
-                          ? const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 20,
+                      color: color,
+                      shape: BoxShape.circle,
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: color.withOpacity(0.6),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
+                      border: isSelected
+                          ? Border.all(
+                              color: Theme.of(context).colorScheme.surface,
+                              width: 3,
                             )
                           : null,
                     ),
+                    child: isSelected
+                        ? const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 20,
+                          )
+                        : null,
                   ),
                 );
-              }).toList(),
+              },
             ),
           ),
         ),
@@ -550,103 +549,104 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               ),
         ),
         const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
-          ),
-          child: Row(
-            children: HabitType.values.map((habitType) {
-              final isSelected = habitType == _selectedHabitType;
-              final isBuild = habitType == HabitType.build;
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedHabitType = habitType;
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 160),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
+        Row(
+          children: HabitType.values.map((habitType) {
+            final isSelected = habitType == _selectedHabitType;
+            final isBuild = habitType == HabitType.build;
+            final color = isBuild ? Colors.green : Colors.red;
+
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedHabitType = habitType;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? color.withOpacity(0.15)
+                          : Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
                         color: isSelected
-                            ? (isBuild
-                                ? Colors.green.withOpacity(0.2)
-                                : Colors.red.withOpacity(0.2))
+                            ? color
                             : Theme.of(context)
                                 .colorScheme
-                                .surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected
-                              ? (isBuild ? Colors.green : Colors.red)
-                              : Colors.white.withOpacity(0.06),
-                          width: isSelected ? 2 : 1,
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: (isBuild ? Colors.green : Colors.red)
-                                      .withOpacity(0.25),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ]
-                            : null,
+                                .outline
+                                .withOpacity(0.1),
+                        width: isSelected ? 2 : 1,
                       ),
-                      child: Column(
-                        children: [
-                          Icon(
+                      boxShadow: [
+                        BoxShadow(
+                          color: isSelected
+                              ? color.withOpacity(0.2)
+                              : Colors.black.withOpacity(0.02),
+                          blurRadius: isSelected ? 12 : 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? color.withOpacity(0.2)
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
                             isBuild ? Icons.trending_up : Icons.trending_down,
                             color: isSelected
-                                ? Colors.white
-                                : Colors.white.withOpacity(0.7),
-                            size: 24,
+                                ? color
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                            size: 28,
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _getHabitTypeLabel(habitType),
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
-                                ?.copyWith(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.7),
-                                  fontWeight: isSelected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            isBuild
-                                ? 'Good habits to build'
-                                : 'Bad habits to break',
-                            textAlign: TextAlign.center,
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: isSelected
-                                          ? Colors.white.withOpacity(0.8)
-                                          : Colors.white.withOpacity(0.5),
-                                    ),
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _getHabitTypeLabel(habitType),
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(
+                                color: isSelected
+                                    ? color
+                                    : Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          isBuild ? 'Build Good Habits' : 'Break Bad Habits',
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: isSelected
+                                        ? color.withOpacity(0.8)
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                  ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );
@@ -656,59 +656,134 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Reminders',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-        ),
-        const SizedBox(height: 12),
-        if (_remindersPerDay == 0)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              'No reminders enabled.',
-              style: TextStyle(color: Theme.of(context).colorScheme.outline),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Reminders',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
-          )
-        else
-          ...List.generate(_remindersPerDay, (index) {
-            final time =
-                (index < _reminderTimes.length) ? _reminderTimes[index] : null;
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: ListTile(
-                tileColor: Theme.of(context).cardColor,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                title: Text(time != null
-                    ? 'Reminder ${index + 1}: ${time.format(context)}'
-                    : 'Set Reminder ${index + 1}'),
-                subtitle: Text(time == null ? 'Tap to set time' : ''),
-                leading: const Icon(Icons.notifications),
-                trailing: time != null
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 20),
-                        onPressed: () {
-                          setState(() {
-                            _reminderTimes.removeAt(index);
-                          });
-                        },
-                      )
-                    : null,
-                onTap: () async {
+            if (_reminderTimes.length < _remindersPerDay)
+              TextButton.icon(
+                onPressed: () async {
                   final picked = await showTimePicker(
                     context: context,
-                    initialTime: time ?? TimeOfDay.now(),
+                    initialTime: TimeOfDay.now(),
                   );
                   if (picked != null) {
                     setState(() {
-                      if (index < _reminderTimes.length) {
-                        _reminderTimes[index] = picked;
-                      } else {
-                        _reminderTimes.add(picked);
-                      }
+                      _reminderTimes.add(picked);
+                      _reminderTimes.sort((a, b) => (a.hour * 60 + a.minute)
+                          .compareTo(b.hour * 60 + b.minute));
+                    });
+                  }
+                },
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add Time'),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_reminderTimes.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withOpacity(0.3),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+              ),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.notifications_off_outlined,
+                  size: 48,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No specific times set',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                Text(
+                  'We will remind you based on frequency',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withOpacity(0.7),
+                      ),
+                ),
+              ],
+            ),
+          )
+        else
+          ...List.generate(_reminderTimes.length, (index) {
+            final time = _reminderTimes[index];
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.access_time_filled,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20,
+                  ),
+                ),
+                title: Text(
+                  time.format(context),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                trailing: IconButton(
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _reminderTimes.removeAt(index);
+                    });
+                  },
+                ),
+                onTap: () async {
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime: time,
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      _reminderTimes[index] = picked;
                       _reminderTimes.sort((a, b) => (a.hour * 60 + a.minute)
                           .compareTo(b.hour * 60 + b.minute));
                     });
@@ -735,7 +810,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Reminders Per Day',
+          'Target Frequency',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -746,8 +821,16 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
-            borderRadius: BorderRadius.circular(12),
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -756,14 +839,14 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Daily Frequency',
+                    'Daily Goal',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.bold,
                         ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Set habit completions per day',
+                    'Times per day',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -772,49 +855,28 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               ),
               Row(
                 children: [
-                  IconButton(
+                  _buildIncrementButton(
+                    icon: Icons.remove,
                     onPressed: _remindersPerDay > 1
-                        ? () {
-                            setState(() {
-                              _remindersPerDay--;
-                              // No need to clear _reminderTimes immediately to be non-destructive
-                            });
-                          }
+                        ? () => setState(() => _remindersPerDay--)
                         : null,
-                    icon: const Icon(Icons.remove_circle_outline),
-                    color: Theme.of(context).colorScheme.primary,
                   ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '$_remindersPerDay',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+                  SizedBox(
+                    width: 48,
+                    child: Text(
+                      '$_remindersPerDay',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  IconButton(
+                  _buildIncrementButton(
+                    icon: Icons.add,
                     onPressed: _remindersPerDay < 10
-                        ? () {
-                            setState(() {
-                              _remindersPerDay++;
-                            });
-                          }
+                        ? () => setState(() => _remindersPerDay++)
                         : null,
-                    icon: const Icon(Icons.add_circle_outline),
-                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ],
               ),
@@ -825,68 +887,88 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     );
   }
 
-  Widget _buildTextFieldCard({
+  Widget _buildIncrementButton(
+      {required IconData icon, VoidCallback? onPressed}) {
+    final theme = Theme.of(context);
+    final isEnabled = onPressed != null;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: isEnabled
+                ? theme.colorScheme.primary
+                : theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            color: isEnabled
+                ? theme.colorScheme.onPrimary
+                : theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernTextField({
     required TextEditingController controller,
     required String label,
     required String hint,
-    required int maxLines,
-    required String? Function(String?) validator,
+    IconData? icon,
+    int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: Theme.of(context)
-                .colorScheme
-                .outline
-                .withAlpha((0.2 * 255).round())),
+          color: theme.colorScheme.outline.withOpacity(0.1),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withAlpha((0.85 * 255).round()),
-            ),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        validator: validator,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: theme.colorScheme.onSurface,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontSize: 14,
           ),
-          const SizedBox(height: 10),
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .outline
-                      .withAlpha((0.2 * 255).round())),
-            ),
-            child: TextFormField(
-              controller: controller,
-              maxLines: maxLines,
-              validator: validator,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: Colors.white,
-              ),
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withAlpha((0.5 * 255).round()),
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-              ),
-            ),
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
           ),
-        ],
+          prefixIcon: icon != null
+              ? Icon(
+                  icon,
+                  color: theme.colorScheme.primary.withOpacity(0.7),
+                  size: 22,
+                )
+              : null,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.all(16),
+          floatingLabelBehavior: FloatingLabelBehavior.auto,
+        ),
       ),
     );
   }

@@ -6,7 +6,7 @@ import '../utils/icon_renderer.dart';
 
 class WidgetService {
   static const MethodChannel _channel =
-      MethodChannel('com.harirajan.streakly/widget');
+      MethodChannel('com.harirajan.streakly/widget_v2');
 
   /// Initialize listener for updates from native side
   void initialize(Function(String) onWidgetAction) {
@@ -113,6 +113,19 @@ class WidgetService {
     }
   }
 
+  /// Sync list of valid habit IDs to clean up "zombies" from widget storage
+  Future<void> syncValidHabitIds(List<String> validIds) async {
+    try {
+      debugPrint(
+          'WidgetService: Syncing ${validIds.length} valid habits to native');
+      await _channel.invokeMethod('syncValidHabitIds', {
+        'validIds': validIds,
+      });
+    } catch (e) {
+      debugPrint('Error syncing valid habit IDs: $e');
+    }
+  }
+
   /// Finish widget configuration with selected habit
   Future<void> finishWithSelectedHabit(
       int appWidgetId, String habitId, Habit habit) async {
@@ -133,5 +146,18 @@ class WidgetService {
     } catch (e) {
       debugPrint('❌ Error finishing widget configuration: $e');
     }
+  }
+
+  /// Get widget configuration launch details (if any)
+  Future<Map<String, dynamic>?> getWidgetConfig() async {
+    try {
+      final result = await _channel.invokeMethod('getWidgetConfig');
+      if (result != null && result is Map) {
+        return Map<String, dynamic>.from(result);
+      }
+    } catch (e) {
+      debugPrint('Error getting widget config: $e');
+    }
+    return null;
   }
 }

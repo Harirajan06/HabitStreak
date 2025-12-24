@@ -14,6 +14,8 @@ import 'services/admob_service.dart';
 import 'services/hive_service.dart';
 import 'notification_initializer.dart';
 import 'services/purchase_service.dart';
+import 'services/widget_service.dart';
+import 'screens/widgets/widget_habit_selection_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -110,14 +112,36 @@ class StreaklyApp extends StatelessWidget {
             ),
             textTheme: GoogleFonts.interTextTheme(
               ThemeData.light().textTheme,
-            ),
+            )
+                .apply(
+                  bodyColor: Colors.black87,
+                  displayColor: Colors.black87,
+                )
+                .copyWith(
+                  displayLarge: GoogleFonts.inter(fontWeight: FontWeight.w300),
+                  displayMedium: GoogleFonts.inter(fontWeight: FontWeight.w300),
+                  displaySmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                  headlineLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  headlineMedium:
+                      GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  headlineSmall: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  titleLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  titleMedium: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  titleSmall: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  bodyLarge: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                  bodyMedium: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                  bodySmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                  labelLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  labelMedium: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                  labelSmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                ),
             appBarTheme: AppBarTheme(
               centerTitle: true,
               elevation: 0,
               backgroundColor: Colors.transparent,
               titleTextStyle: GoogleFonts.inter(
                 fontSize: 20,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500, // Reduced from w600
                 color: Colors.black87,
               ),
               iconTheme: const IconThemeData(color: Colors.black87),
@@ -148,14 +172,36 @@ class StreaklyApp extends StatelessWidget {
             ),
             textTheme: GoogleFonts.interTextTheme(
               ThemeData.dark().textTheme,
-            ),
+            )
+                .apply(
+                  bodyColor: Colors.white,
+                  displayColor: Colors.white,
+                )
+                .copyWith(
+                  displayLarge: GoogleFonts.inter(fontWeight: FontWeight.w300),
+                  displayMedium: GoogleFonts.inter(fontWeight: FontWeight.w300),
+                  displaySmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                  headlineLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  headlineMedium:
+                      GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  headlineSmall: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  titleLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  titleMedium: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  titleSmall: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  bodyLarge: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                  bodyMedium: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                  bodySmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                  labelLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  labelMedium: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                  labelSmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
+                ),
             appBarTheme: AppBarTheme(
               centerTitle: true,
               elevation: 0,
               backgroundColor: Colors.transparent,
               titleTextStyle: GoogleFonts.inter(
                 fontSize: 20,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500, // Reduced from w600
                 color: Colors.white,
               ),
             ),
@@ -196,6 +242,30 @@ class _StreaklyLogicWrapperState extends State<StreaklyLogicWrapper>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Check if we were launched for widget configuration
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkWidgetLaunch();
+    });
+  }
+
+  Future<void> _checkWidgetLaunch() async {
+    final widgetService = WidgetService();
+    final config = await widgetService.getWidgetConfig();
+
+    if (config != null && config['mode'] == true) {
+      final int appWidgetId = config['appWidgetId'] ?? -1;
+      if (appWidgetId != -1 && mounted) {
+        debugPrint(
+            "🚀 Launched in Widget Configuration Mode for ID: $appWidgetId");
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) =>
+                WidgetHabitSelectionScreen(appWidgetId: appWidgetId),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -208,6 +278,9 @@ class _StreaklyLogicWrapperState extends State<StreaklyLogicWrapper>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       debugPrint("App Resumed - Syncing Widget Actions");
+      // Check for widget config launch on resume (if app was in background)
+      _checkWidgetLaunch();
+
       // Delay slightly to ensure provider is ready if needed, though usually safe immediately
       Future.delayed(Duration.zero, () {
         if (mounted) {

@@ -10,7 +10,7 @@ import com.harirajan.streakly.widget.HabitWidgetProvider
 import com.harirajan.streakly.widget.WidgetStorage
 
 class MainActivity: FlutterActivity() {
-    private val CHANNEL = "com.example.Streakly/widget"
+    private val CHANNEL = "com.harirajan.streakly/widget_v2"
 
     companion object {
         var channel: MethodChannel? = null
@@ -20,6 +20,7 @@ class MainActivity: FlutterActivity() {
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        android.util.Log.d("StreaklyNative", "Configuring Flutter Engine with Channel: $CHANNEL")
         super.configureFlutterEngine(flutterEngine)
         channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         channel?.setMethodCallHandler { call, result ->
@@ -119,6 +120,30 @@ class MainActivity: FlutterActivity() {
                 }
                 "clearPendingActions" -> {
                     WidgetStorage.clearPendingActions(context)
+                    result.success(null)
+                }
+                "syncValidHabitIds" -> {
+                    val validIds = call.argument<List<String>>("validIds")
+                    if (validIds != null) {
+                        // 1. Get all stored habits
+                        val storedHabits = WidgetStorage.getAllStoredHabitIds(context)
+                        
+                        // 2. Identify stale IDs (Stored but not in Valid list)
+                        val staleIds = storedHabits.filter { !validIds.contains(it) }
+                        
+                        // 3. Cleanup stale data and mappings
+                        val affectedWidgetIds = HashSet<Int>()
+                        for (staleId in staleIds) {
+                            WidgetStorage.removeHabitData(context, staleId)
+                             val ids = WidgetStorage.clearMappingsForHabit(context, staleId)
+                             affectedWidgetIds.addAll(ids)
+                        }
+                        
+                        // 4. Update widgets that were displaying stale habits
+                        for (id in affectedWidgetIds) {
+                            updateWidget(id)
+                        }
+                    }
                     result.success(null)
                 }
                 else -> {

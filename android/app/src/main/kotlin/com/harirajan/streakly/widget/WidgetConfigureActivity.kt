@@ -7,6 +7,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 
+import com.harirajan.streakly.MainActivity
+
 /**
  * Configuration activity now delegates habit selection to the Flutter UI.
  * It starts `MainActivity` (the FlutterActivity) for result; the Flutter UI
@@ -29,7 +31,7 @@ class WidgetConfigureActivity : AppCompatActivity() {
 
         // Launch the Flutter activity for habit selection. The Flutter UI should detect
         // this launch and show a habit selection screen when it sees the extras below.
-        val launch = Intent(this, Class.forName("com.example.Streakly.MainActivity"))
+        val launch = Intent(this, MainActivity::class.java)
         launch.putExtra("WIDGET_CONFIG_MODE", true)
         launch.putExtra("APPWIDGET_ID", appWidgetId)
         // Note: Do NOT add FLAG_ACTIVITY_NEW_TASK when using startActivityForResult

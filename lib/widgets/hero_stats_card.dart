@@ -131,8 +131,7 @@ class HeroStatsCard extends StatelessWidget {
                             // Tint the animation to gold using ShaderMask
                             return ShaderMask(
                               blendMode: BlendMode.srcATop,
-                              shaderCallback: (rect) =>
-                                  const LinearGradient(
+                              shaderCallback: (rect) => const LinearGradient(
                                 colors: [Color(0xFFFFD700), Color(0xFFFFD700)],
                               ).createShader(rect),
                               child: lottie,
@@ -244,13 +243,15 @@ class HeroStatsCard extends StatelessWidget {
                           gradient: LinearGradient(
                             colors: [
                               theme.colorScheme.primary,
-                              theme.colorScheme.primary.withAlpha((0.7 * 255).toInt()),
+                              theme.colorScheme.primary
+                                  .withAlpha((0.7 * 255).toInt()),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: theme.colorScheme.primary.withAlpha((0.5 * 255).toInt()),
+                              color: theme.colorScheme.primary
+                                  .withAlpha((0.5 * 255).toInt()),
                               blurRadius: 8,
                               offset: const Offset(0, 0),
                             ),
@@ -304,7 +305,8 @@ class HeroStatsCard extends StatelessWidget {
               color: theme.colorScheme.primary.withAlpha((0.12 * 255).toInt()),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: theme.colorScheme.primary.withAlpha((0.25 * 255).toInt()),
+                color:
+                    theme.colorScheme.primary.withAlpha((0.25 * 255).toInt()),
                 width: 1,
               ),
             ),
@@ -312,7 +314,7 @@ class HeroStatsCard extends StatelessWidget {
               _getMotivationalMessage(),
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withAlpha((0.95 * 255).toInt()),
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.3,
                 fontSize: isSmallScreen ? 12 : null,

@@ -164,6 +164,59 @@ import WidgetKit
           result(nil)
           return
       }
+
+      else if call.method == "syncValidHabitIds" {
+         if let args = call.arguments as? [String: Any],
+            let validIds = args["validIds"] as? [String] {
+             
+             print("📱 syncValidHabitIds called with \(validIds.count) IDs")
+             
+             // 1. Clean Habit Data
+             if let jsonString = sharedDefaults?.string(forKey: keyHabitsData),
+                let data = jsonString.data(using: .utf8),
+                var allData = try? JSONSerialization.jsonObject(with: data) as? [String: String] {
+                 
+                 let initialCount = allData.count
+                 // Filter to keep only habits that exist in validIds
+                 allData = allData.filter { validIds.contains($0.key) }
+                 
+                 if allData.count != initialCount {
+                     if let outData = try? JSONSerialization.data(withJSONObject: allData),
+                        let outString = String(data: outData, encoding: .utf8) {
+                         sharedDefaults?.set(outString, forKey: keyHabitsData)
+                         print("✅ Removed \(initialCount - allData.count) stale habits from widget storage")
+                     }
+                 } else {
+                     print("✅ No stale habits found")
+                 }
+             }
+             
+             // 2. Clean Mappings
+             if let jsonString = sharedDefaults?.string(forKey: keyWidgetMapping),
+                let data = jsonString.data(using: .utf8),
+                var mapping = try? JSONSerialization.jsonObject(with: data) as? [String: String] {
+                 
+                 let initialCount = mapping.count
+                 // Filter mappings where the target habit ID is valid
+                 mapping = mapping.filter { validIds.contains($0.value) }
+                 
+                 if mapping.count != initialCount {
+                     if let outData = try? JSONSerialization.data(withJSONObject: mapping),
+                        let outString = String(data: outData, encoding: .utf8) {
+                         sharedDefaults?.set(outString, forKey: keyWidgetMapping)
+                         print("✅ Removed \(initialCount - mapping.count) stale mappings")
+                     }
+                 }
+             }
+             
+             // 3. Reload widgets if any cleanup happened (or just always to be safe)
+             if #available(iOS 14.0, *) {
+                 WidgetCenter.shared.reloadAllTimelines()
+             }
+         }
+         result(nil)
+         return
+      }
       
       else if call.method == "getWidgetConfig" {
           print("📱 getWidgetConfig called, isConfiguringWidget: \(self.isConfiguringWidget)")

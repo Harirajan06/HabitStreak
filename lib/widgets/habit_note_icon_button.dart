@@ -9,11 +9,13 @@ import '../providers/note_provider.dart';
 class HabitNoteIconButton extends StatelessWidget {
   final Habit habit;
   final double size;
+  final bool isSquare;
 
   const HabitNoteIconButton({
     super.key,
     required this.habit,
     this.size = 32,
+    this.isSquare = false,
   });
 
   @override
@@ -30,13 +32,15 @@ class HabitNoteIconButton extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: borderColor, width: 2),
+            shape: isSquare ? BoxShape.rectangle : BoxShape.circle,
+            borderRadius: isSquare ? BorderRadius.circular(8) : null,
+            color: isSquare ? habit.color.withOpacity(0.1) : null,
+            border: isSquare ? null : Border.all(color: borderColor, width: 2),
           ),
           child: Icon(
             Icons.sticky_note_2_outlined,
             color: borderColor,
-            size: size * 0.6,
+            size: isSquare ? 24 : size * 0.6,
           ),
         ),
       ),

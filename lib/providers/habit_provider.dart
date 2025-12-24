@@ -100,6 +100,9 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
 
       await syncWidgetActions();
 
+      // Sync valid IDs to clean up any zombie widgets
+      await _widgetService.syncValidHabitIds(_habits.map((h) => h.id).toList());
+
       // Refresh all widgets to ensure native cache has latest remindersPerDay/data
       for (final habit in _habits) {
         _widgetService.updateWidgetForHabit(habit, isDarkMode: _isDarkMode);

@@ -166,4 +166,14 @@ object WidgetStorage {
             JSONObject()
         }
     }
+
+    fun getAllStoredHabitIds(context: Context): List<String> {
+        val allData = getHabitsData(context)
+        val keysIterator = allData.keys()
+        val ids = mutableListOf<String>()
+        while (keysIterator.hasNext()) {
+            ids.add(keysIterator.next())
+        }
+        return ids
+    }
 }

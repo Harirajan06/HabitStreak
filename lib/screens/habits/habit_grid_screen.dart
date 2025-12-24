@@ -256,14 +256,14 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                       child: Row(
                         children: [
                           Container(
-                            width: 32,
-                            height: 32,
+                            width: 44,
+                            height: 44,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF2C3145),
-                              borderRadius: BorderRadius.circular(6),
+                              color: habit.color.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child:
-                                Icon(habit.icon, color: habit.color, size: 18),
+                                Icon(habit.icon, color: habit.color, size: 24),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -308,7 +308,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                                       '${_calculateCurrentStreak(habit)} day streak',
                                       style:
                                           theme.textTheme.bodySmall?.copyWith(
-                                        color: Colors.white,
+                                        color: theme.colorScheme.onSurface,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -325,9 +325,11 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                     Row(
                       mainAxisSize: MainAxisSize.min, // Keep buttons tight
                       children: [
-                        HabitNoteIconButton(habit: habit, size: 32),
+                        HabitNoteIconButton(
+                            habit: habit, size: 44, isSquare: true),
                         const SizedBox(width: 6),
-                        MultiCompletionButton(habit: habit, size: 32),
+                        MultiCompletionButton(
+                            habit: habit, size: 44, isSquare: true),
                       ],
                     ),
                   ],
@@ -344,12 +346,51 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
 
   Widget _buildYearGrid(Habit habit, ThemeData theme) {
     const int rows = 7;
-    const int cols = 52;
     const double cellSize = 10.0;
     const double spacing = 2.0;
 
     final now = DateTime.now();
-    final startOfYear = DateTime(now.year, 1, 1);
+
+    // Rolling Grid Logic:
+    // 1. End point: "Today" is in the last (right-most) column.
+    // 2. Start point: habit.createdAt (or at least ~20 weeks back for looks).
+    // 3. Columns: Calculate total weeks needed.
+
+    // Calculate Week Start (Sunday) for 'Now'
+    final currentWeekStart = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday == 7 ? 0 : now.weekday));
+
+    // Calculate Week Start (Sunday) for 'CreatedAt'
+    final createdWeekStart = DateTime(
+            habit.createdAt.year, habit.createdAt.month, habit.createdAt.day)
+        .subtract(Duration(
+            days: habit.createdAt.weekday == 7 ? 0 : habit.createdAt.weekday));
+
+    // Calculate total weeks
+    // Calculate total weeks
+    final daysDiff = currentWeekStart.difference(createdWeekStart).inDays;
+    int totalWeeks = (daysDiff / 7).ceil() + 1; // +1 to include current week
+
+    // Ensure minimum visual width to fill grid (e.g., 52 weeks ~ 1 year)
+    // This fills the space on the left side with past weeks, keeping "Today" pinned to the right.
+    if (totalWeeks < 52) totalWeeks = 52;
+
+    // For Left-to-Right growth (Oldest -> Newest):
+    // Start drawing from createdWeekStart (or further back if using min visual width).
+    // Actually, if we want to ensure 'totalWeeks' matches the visual,
+    // we should base start date on 'end date - totalWeeks'.
+    final effectiveStartDate =
+        currentWeekStart.subtract(Duration(days: (totalWeeks - 1) * 7));
+
+    // Controller for auto-scroll to end (Today)
+    final ScrollController scrollController = ScrollController();
+
+    // Schedule scroll to end after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (scrollController.hasClients) {
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      }
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,40 +398,58 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
         SizedBox(
           height: rows * (cellSize + spacing),
           child: SingleChildScrollView(
+            controller: scrollController,
             scrollDirection: Axis.horizontal,
-            reverse: true,
+            reverse: false, // Standard Left-to-Right
+            physics: const BouncingScrollPhysics(),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: List.generate(cols, (week) {
+              mainAxisAlignment: MainAxisAlignment.start, // Align to left
+              children: List.generate(totalWeeks, (weekIndex) {
+                // weekIndex 0 = Oldest displayed week
+
+                final weekStart =
+                    effectiveStartDate.add(Duration(days: weekIndex * 7));
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 1),
                   child: Column(
-                    children: List.generate(rows, (dayOfWeek) {
-                      final cellDate = startOfYear
-                          .add(Duration(days: (week * 7) + dayOfWeek));
+                    children: List.generate(rows, (dayOffset) {
+                      // 0=Sun, 1=Mon...
+                      final cellDate = weekStart.add(Duration(days: dayOffset));
 
-                      if (cellDate.year > now.year) {
-                        return SizedBox(width: cellSize, height: cellSize);
-                      }
+                      // Key
+                      final dateKey =
+                          '${cellDate.year}-${cellDate.month.toString().padLeft(2, '0')}-${cellDate.day.toString().padLeft(2, '0')}';
+                      final int completionCount =
+                          habit.dailyCompletions[dateKey] ?? 0;
+                      final int target =
+                          habit.remindersPerDay > 0 ? habit.remindersPerDay : 1;
 
-                      final isCompleted = habit.completedDates.any((date) =>
-                          date.year == cellDate.year &&
-                          date.month == cellDate.month &&
-                          date.day == cellDate.day);
+                      // Date Checks
+                      final today = DateTime(now.year, now.month, now.day);
+                      final isFutureDate = cellDate.isAfter(today);
+                      final isPreCreation = cellDate.isBefore(DateTime(
+                          habit.createdAt.year,
+                          habit.createdAt.month,
+                          habit.createdAt.day));
 
                       Color cellColor;
-                      if (isCompleted) {
-                        cellColor = habit.color;
-                      } else if (cellDate.isAfter(now)) {
-                        cellColor = habit.color.withAlpha((0.15 * 255).round());
+
+                      if (completionCount > 0) {
+                        double opacity =
+                            (completionCount / target).clamp(0.0, 1.0);
+                        cellColor = habit.color.withOpacity(opacity);
+                      } else if (isFutureDate) {
+                        cellColor = habit.color.withOpacity(0.15);
+                      } else if (isPreCreation) {
+                        cellColor = habit.color.withOpacity(0.15);
                       } else {
-                        cellColor = theme.colorScheme.onSurface
-                            .withAlpha((0.1 * 255).round());
+                        cellColor = habit.color.withOpacity(0.40);
                       }
 
-                      final isToday = cellDate.day == now.day &&
+                      final isToday = cellDate.year == now.year &&
                           cellDate.month == now.month &&
-                          cellDate.year == now.year;
+                          cellDate.day == now.day;
 
                       return GestureDetector(
                         onTap: () => _onGridCellTap(habit, cellDate),

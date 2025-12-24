@@ -15,7 +15,7 @@ import '../../services/export_import_service.dart';
 import '../../widgets/modern_button.dart';
 import '../main/main_navigation.dart';
 import '../auth/splash_screen.dart';
-import 'analysis_screen.dart';
+
 import '../subscription/subscription_plans_screen.dart';
 import '../../widgets/hero_stats_card.dart';
 
@@ -288,15 +288,32 @@ class ProfileScreen extends StatelessWidget {
         _buildMenuCard(
           context,
           [
-            _buildMenuItem(
-              context,
-              title: 'Analysis',
-              subtitle: 'View your habit statistics and progress',
-              icon: Icons.analytics,
-              iconColor: Color(0xFF9B5DE5),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AnalysisScreen()),
+            Consumer<ThemeProvider>(
+              builder: (context, themeProvider, child) {
+                return _buildMenuItem(
+                  context,
+                  title: 'Dark Mode',
+                  subtitle: 'Toggle app theme',
+                  icon: themeProvider.isDarkMode
+                      ? Icons.dark_mode
+                      : Icons.light_mode,
+                  iconColor: themeProvider.isDarkMode
+                      ? Colors.purpleAccent
+                      : Colors.orangeAccent,
+                  onTap: () {
+                    final newMode = themeProvider.isDarkMode
+                        ? ThemeMode.light
+                        : ThemeMode.dark;
+                    themeProvider.setThemeMode(newMode);
+                  },
+                  trailing: Switch(
+                    value: themeProvider.isDarkMode,
+                    activeColor: const Color(0xFF9B5DE5),
+                    onChanged: (value) {
+                      final newMode = value ? ThemeMode.dark : ThemeMode.light;
+                      themeProvider.setThemeMode(newMode);
+                    },
+                  ),
                 );
               },
             ),
@@ -333,41 +350,7 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        _buildMenuCard(
-          context,
-          [
-            Consumer<ThemeProvider>(
-              builder: (context, themeProvider, child) {
-                return _buildMenuItem(
-                  context,
-                  title: 'Dark Mode',
-                  subtitle: 'Toggle app theme',
-                  icon: themeProvider.isDarkMode
-                      ? Icons.dark_mode
-                      : Icons.light_mode,
-                  iconColor: themeProvider.isDarkMode
-                      ? Colors.purpleAccent
-                      : Colors.orangeAccent,
-                  onTap: () {
-                    final newMode = themeProvider.isDarkMode
-                        ? ThemeMode.light
-                        : ThemeMode.dark;
-                    themeProvider.setThemeMode(newMode);
-                  },
-                  trailing: Switch(
-                    value: themeProvider.isDarkMode,
-                    activeColor: const Color(0xFF9B5DE5),
-                    onChanged: (value) {
-                      final newMode = value ? ThemeMode.dark : ThemeMode.light;
-                      themeProvider.setThemeMode(newMode);
-                    },
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
+
         // Modified "Share App" Menu Item
         _buildMenuCard(
           context,
