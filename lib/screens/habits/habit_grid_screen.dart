@@ -3,10 +3,9 @@ import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../models/habit.dart';
 import '../../providers/habit_provider.dart';
-import '../../widgets/habit_detail_bottom_sheet.dart';
+import 'habit_detail_screen.dart'; // Add this import
 import '../../widgets/habit_note_icon_button.dart';
 import '../../widgets/multi_completion_button.dart';
-import '../main/main_navigation.dart';
 import '../main_navigation_screen.dart';
 import '../profile/profile_screen.dart';
 import '../../services/navigation_service.dart';
@@ -83,7 +82,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.person_outline, size: 24),
+            icon: const Icon(Icons.settings, size: 24),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -228,20 +227,20 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () => HabitDetailBottomSheet.show(context, habit),
+          onTap: () => HabitDetailScreen.show(context, habit),
           onLongPress: () => _showHabitOptionsMenu(habit),
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: theme.cardColor,
+              color: theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
-              border:
-                  Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+              border: Border.all(
+                  color: theme.colorScheme.outline.withOpacity(0.15)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -259,11 +258,15 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: habit.color.withOpacity(0.1),
+                              color: Color.lerp(habit.color, Colors.grey, 0.3)!
+                                  .withOpacity(0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child:
-                                Icon(habit.icon, color: habit.color, size: 24),
+                            child: Icon(
+                              habit.icon,
+                              color: Color.lerp(habit.color, Colors.grey, 0.3),
+                              size: 24,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -783,7 +786,9 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                   await NavigationService.setGridViewMode(false);
                   if (context.mounted) {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const MainNavigation()),
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              const MainNavigationScreen(initialIndex: 0)),
                     );
                   }
                 },

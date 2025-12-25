@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/habit.dart';
-import 'habit_detail_bottom_sheet.dart';
+import '../screens/habits/habit_detail_screen.dart';
 import 'habit_note_icon_button.dart';
 import 'multi_completion_button.dart';
 import 'marquee_widget.dart';
@@ -36,7 +36,7 @@ class HabitProgressCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          onTap: onPressed ?? () => HabitDetailBottomSheet.show(context, habit),
+          onTap: onPressed ?? () => HabitDetailScreen.show(context, habit),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Row(

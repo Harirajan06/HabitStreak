@@ -13,7 +13,7 @@ import '../../providers/theme_provider.dart'; // Import ThemeProvider
 import '../../models/habit.dart';
 import '../../services/export_import_service.dart';
 import '../../widgets/modern_button.dart';
-import '../main/main_navigation.dart';
+import '../main_navigation_screen.dart';
 import '../auth/splash_screen.dart';
 
 import '../subscription/subscription_plans_screen.dart';
@@ -64,8 +64,8 @@ class ProfileScreen extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(
-          left: 20,
-          right: 20,
+          left: 16,
+          right: 16,
           top: 16,
           bottom: 100, // Added more bottom padding
         ),
@@ -1074,7 +1074,8 @@ class ProfileScreen extends StatelessWidget {
                           .logout();
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(
-                            builder: (_) => const MainNavigation()),
+                            builder: (_) =>
+                                const MainNavigationScreen(initialIndex: 0)),
                         (route) => false,
                       );
                     },

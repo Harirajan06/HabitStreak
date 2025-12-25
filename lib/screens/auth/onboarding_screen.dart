@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../main/main_navigation.dart';
+import '../main_navigation_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -17,13 +17,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<OnboardingPage> _pages = [
     OnboardingPage(
       title: 'Track Your Habits',
-      description: 'Build consistency by tracking your daily habits and routines with ease.',
+      description:
+          'Build consistency by tracking your daily habits and routines with ease.',
       icon: Icons.track_changes,
       color: Colors.blue,
     ),
     OnboardingPage(
       title: 'Build Streaks',
-      description: 'Stay motivated by building and maintaining streaks for your habits.',
+      description:
+          'Stay motivated by building and maintaining streaks for your habits.',
       icon: Icons.local_fire_department,
       color: Colors.orange,
     ),
@@ -35,7 +37,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
     OnboardingPage(
       title: 'Earn Rewards',
-      description: 'Unlock achievements and discover products that support your journey.',
+      description:
+          'Unlock achievements and discover products that support your journey.',
       icon: Icons.emoji_events,
       color: Color(0xFF9B5DE5),
     ),
@@ -73,7 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await prefs.setBool('has_seen_onboarding', true);
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const MainNavigation()),
+      MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
     );
   }
 
@@ -86,7 +89,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Container(
             width: 150,
             height: 150,
-              decoration: BoxDecoration(
+            decoration: BoxDecoration(
               color: page.color.withAlpha((0.1 * 255).round()),
               borderRadius: BorderRadius.circular(75),
             ),
@@ -100,18 +103,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             page.title,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           Text(
             page.description,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withAlpha((0.7 * 255).round()),
-              height: 1.5,
-            ),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withAlpha((0.7 * 255).round()),
+                  height: 1.5,
+                ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -135,7 +141,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 decoration: BoxDecoration(
                   color: _currentPage == index
                       ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.primary.withAlpha((0.3 * 255).round()),
+                      : Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withAlpha((0.3 * 255).round()),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -161,7 +170,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               else
                 TextButton(
                   style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.onSurface.withAlpha((0.6 * 255).round()),
+                    foregroundColor: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withAlpha((0.6 * 255).round()),
                     textStyle: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   onPressed: null,
@@ -173,7 +185,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                     textStyle: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   onPressed: () {
@@ -189,7 +202,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                     textStyle: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   onPressed: _completeOnboarding,

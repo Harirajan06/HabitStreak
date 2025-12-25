@@ -10,6 +10,7 @@ import 'providers/auth_provider.dart';
 import 'providers/habit_provider.dart';
 import 'providers/note_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/mood_provider.dart';
 import 'services/admob_service.dart';
 import 'services/hive_service.dart';
 import 'notification_initializer.dart';
@@ -83,6 +84,7 @@ void main() async {
           },
         ),
         ChangeNotifierProvider(create: (_) => NoteProvider()),
+        ChangeNotifierProvider(create: (_) => MoodProvider()),
       ],
       child: StreaklyApp(pinRequired: pinRequired),
     ),
@@ -112,36 +114,14 @@ class StreaklyApp extends StatelessWidget {
             ),
             textTheme: GoogleFonts.interTextTheme(
               ThemeData.light().textTheme,
-            )
-                .apply(
-                  bodyColor: Colors.black87,
-                  displayColor: Colors.black87,
-                )
-                .copyWith(
-                  displayLarge: GoogleFonts.inter(fontWeight: FontWeight.w300),
-                  displayMedium: GoogleFonts.inter(fontWeight: FontWeight.w300),
-                  displaySmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                  headlineLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  headlineMedium:
-                      GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  headlineSmall: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  titleLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  titleMedium: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  titleSmall: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  bodyLarge: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                  bodyMedium: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                  bodySmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                  labelLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  labelMedium: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                  labelSmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                ),
+            ),
             appBarTheme: AppBarTheme(
               centerTitle: true,
               elevation: 0,
               backgroundColor: Colors.transparent,
               titleTextStyle: GoogleFonts.inter(
                 fontSize: 20,
-                fontWeight: FontWeight.w500, // Reduced from w600
+                fontWeight: FontWeight.w600,
                 color: Colors.black87,
               ),
               iconTheme: const IconThemeData(color: Colors.black87),
@@ -168,40 +148,18 @@ class StreaklyApp extends StatelessWidget {
             colorScheme: const ColorScheme.dark(
               primary: Color(0xFF9B5DE5), // Bright Purple
               secondary: Color(0xFF9B5DE5),
-              surface: Color(0xFF121212),
+              surface: Color(0xFF1E1E1E), // Lighter dark background
             ),
             textTheme: GoogleFonts.interTextTheme(
               ThemeData.dark().textTheme,
-            )
-                .apply(
-                  bodyColor: Colors.white,
-                  displayColor: Colors.white,
-                )
-                .copyWith(
-                  displayLarge: GoogleFonts.inter(fontWeight: FontWeight.w300),
-                  displayMedium: GoogleFonts.inter(fontWeight: FontWeight.w300),
-                  displaySmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                  headlineLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  headlineMedium:
-                      GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  headlineSmall: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  titleLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  titleMedium: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  titleSmall: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  bodyLarge: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                  bodyMedium: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                  bodySmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                  labelLarge: GoogleFonts.inter(fontWeight: FontWeight.w500),
-                  labelMedium: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                  labelSmall: GoogleFonts.inter(fontWeight: FontWeight.w400),
-                ),
+            ),
             appBarTheme: AppBarTheme(
               centerTitle: true,
               elevation: 0,
               backgroundColor: Colors.transparent,
               titleTextStyle: GoogleFonts.inter(
                 fontSize: 20,
-                fontWeight: FontWeight.w500, // Reduced from w600
+                fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
             ),

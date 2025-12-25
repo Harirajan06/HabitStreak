@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'habits/habit_grid_screen.dart';
+import 'habits/habits_screen.dart';
 import 'notes/notes_screen.dart';
 import 'habits/add_habit_screen.dart';
 import 'profile/analysis_screen.dart';
@@ -33,8 +34,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
 
-    // Set grid view mode and current tab in NavigationService
-    NavigationService.setGridViewMode(true);
+    // Set current tab in NavigationService
     NavigationService.setCurrentTab(_currentIndex);
   }
 
@@ -49,11 +49,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       _currentIndex = index;
     });
     NavigationService.setCurrentTab(index);
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    _pageController.jumpToPage(index);
   }
 
   @override
@@ -70,8 +66,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         physics:
             const BouncingScrollPhysics(), // Enable smooth scrolling with bounce effect
         allowImplicitScrolling: false,
-        children: const [
-          HabitGridScreen(),
+        children: [
+          NavigationService.isGridViewMode
+              ? const HabitGridScreen()
+              : const HabitsScreen(),
           AnalysisScreen(),
           MoodTrackerScreen(),
           NotesScreen(),

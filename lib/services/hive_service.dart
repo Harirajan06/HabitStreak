@@ -15,6 +15,7 @@ class HiveService {
   late Box _notesBox;
   late Box _usersBox;
   late Box _settingsBox;
+  late Box _moodsBox;
 
   Future<void> init() async {
     await Hive.initFlutter();
@@ -33,6 +34,7 @@ class HiveService {
     _notesBox = await Hive.openBox('notes_box');
     _usersBox = await Hive.openBox('users_box');
     _settingsBox = await Hive.openBox('settings_box');
+    _moodsBox = await Hive.openBox('moods_box');
     // Open purchases box for local purchase records and entitlements
     await Hive.openBox('purchases_box');
   }
@@ -65,7 +67,8 @@ class HiveService {
     }
   }
 
-  Future<void> recordCompletion(String habitId, DateTime date, {int count = 1}) async {
+  Future<void> recordCompletion(String habitId, DateTime date,
+      {int count = 1}) async {
     final data = _habitsBox.get(habitId);
     if (data == null) return;
     final habit = Habit.fromJson(Map<String, dynamic>.from(data));
@@ -79,7 +82,8 @@ class HiveService {
       completedDates.add(date);
     }
 
-    final updated = habit.copyWith(completedDates: completedDates, dailyCompletions: daily);
+    final updated =
+        habit.copyWith(completedDates: completedDates, dailyCompletions: daily);
     await updateHabit(updated);
   }
 
@@ -92,9 +96,11 @@ class HiveService {
     final daily = Map<String, int>.from(habit.dailyCompletions);
     daily.remove(dateKey);
 
-    final completedDates = habit.completedDates.where((d) => !_isSameDay(d, date)).toList();
+    final completedDates =
+        habit.completedDates.where((d) => !_isSameDay(d, date)).toList();
 
-    final updated = habit.copyWith(completedDates: completedDates, dailyCompletions: daily);
+    final updated =
+        habit.copyWith(completedDates: completedDates, dailyCompletions: daily);
     await updateHabit(updated);
   }
 
@@ -145,7 +151,8 @@ class HiveService {
 
   // Settings
   Map<String, dynamic> getSettings() {
-    return Map<String, dynamic>.from(_settingsBox.get('settings', defaultValue: {}) as Map);
+    return Map<String, dynamic>.from(
+        _settingsBox.get('settings', defaultValue: {}) as Map);
   }
 
   Future<void> setSettings(Map<String, dynamic> settings) async {
@@ -157,6 +164,7 @@ class HiveService {
     await _notesBox.clear();
     await _usersBox.clear();
     await _settingsBox.clear();
+    await _moodsBox.clear();
   }
 
   // Helpers
@@ -172,14 +180,20 @@ class HiveService {
   Map<String, dynamic> exportAllAsJson() {
     return {
       'meta': {'exportedAt': DateTime.now().toIso8601String()},
-      'users': _usersBox.values.map((e) => Map<String, dynamic>.from(e)).toList(),
-      'habits': _habitsBox.values.map((e) => Map<String, dynamic>.from(e)).toList(),
-      'notes': _notesBox.values.map((e) => Map<String, dynamic>.from(e)).toList(),
+      'users':
+          _usersBox.values.map((e) => Map<String, dynamic>.from(e)).toList(),
+      'habits':
+          _habitsBox.values.map((e) => Map<String, dynamic>.from(e)).toList(),
+      'notes':
+          _notesBox.values.map((e) => Map<String, dynamic>.from(e)).toList(),
+      'moods':
+          _moodsBox.values.map((e) => Map<String, dynamic>.from(e)).toList(),
       'settings': getSettings(),
     };
   }
 
-  Future<void> importJson(Map<String, dynamic> data, {bool overwrite = false}) async {
+  Future<void> importJson(Map<String, dynamic> data,
+      {bool overwrite = false}) async {
     if (overwrite) {
       await clearAll();
     }
@@ -187,6 +201,7 @@ class HiveService {
     final users = (data['users'] as List?) ?? [];
     final habits = (data['habits'] as List?) ?? [];
     final notes = (data['notes'] as List?) ?? [];
+    final moods = (data['moods'] as List?) ?? [];
     final settings = (data['settings'] as Map<String, dynamic>?) ?? {};
 
     for (final u in users) {
@@ -205,6 +220,13 @@ class HiveService {
       final map = Map<String, dynamic>.from(n);
       final note = Note.fromJson(map);
       await addNote(note);
+    }
+
+    for (final m in moods) {
+      final map = Map<String, dynamic>.from(m);
+      // MoodEntry uses date string as key/id
+      final id = map['id'] as String;
+      await _moodsBox.put(id, map);
     }
 
     if (settings.isNotEmpty) {

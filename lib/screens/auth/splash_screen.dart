@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/admob_service.dart';
-import '../main/main_navigation.dart';
 import '../../services/navigation_service.dart';
 import '../main_navigation_screen.dart';
 import 'onboarding_screen.dart';
@@ -100,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen>
       } else {
         if (!mounted) return;
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainNavigation()),
+          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
         );
       }
     } catch (e) {

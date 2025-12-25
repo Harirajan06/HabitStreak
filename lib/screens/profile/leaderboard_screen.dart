@@ -37,9 +37,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         final userSpecificHabits = habits.where((h) => true).toList();
 
         final totalHabits = userSpecificHabits.length;
-        final totalCompletions = userSpecificHabits.fold<int>(0, (sum, h) => sum + h.completedDates.length);
-        final currentStreak = userSpecificHabits.fold<int>(0, (maxv, h) => h.currentStreak > maxv ? h.currentStreak : maxv);
-        final longestStreak = userSpecificHabits.fold<int>(0, (maxv, h) => h.longestStreak > maxv ? h.longestStreak : maxv);
+        final totalCompletions = userSpecificHabits.fold<int>(
+            0, (sum, h) => sum + h.completedDates.length);
+        final currentStreak = userSpecificHabits.fold<int>(
+            0, (maxv, h) => h.currentStreak > maxv ? h.currentStreak : maxv);
+        final longestStreak = userSpecificHabits.fold<int>(
+            0, (maxv, h) => h.longestStreak > maxv ? h.longestStreak : maxv);
 
         return LeaderboardEntry(
           userId: u.id,
@@ -121,7 +124,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget _buildHeader(ThemeData theme) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: const BorderRadius.only(
@@ -276,7 +279,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -388,7 +391,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   Widget _buildLeaderboardList(ThemeData theme) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(22),

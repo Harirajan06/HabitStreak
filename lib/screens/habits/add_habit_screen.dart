@@ -323,20 +323,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'What do you want to achieve?',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          'Habit Information',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Start small, consistency is key.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-        ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _buildModernTextField(
           controller: _nameController,
           label: 'Habit Name',
@@ -420,7 +413,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       color: isSelected
                           ? Theme.of(context).colorScheme.primary
                           : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
+                      shape: BoxShape.circle,
                       border: isSelected
                           ? null
                           : Border.all(

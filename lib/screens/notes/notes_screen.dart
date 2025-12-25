@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import '../profile/profile_screen.dart';
 import 'package:provider/provider.dart';
+import '../../providers/mood_provider.dart';
 import '../../providers/note_provider.dart';
 import '../../providers/habit_provider.dart';
 import '../../models/habit.dart';
@@ -23,8 +25,11 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // Refresh notes after the first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshNotes();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _syncMoodNotes();
+      if (mounted) {
+        await _refreshNotes();
+      }
     });
   }
 
@@ -32,6 +37,72 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _refreshNotes();
+    }
+  }
+
+  Future<void> _syncMoodNotes() async {
+    if (!mounted) return;
+    final moodProvider = Provider.of<MoodProvider>(context, listen: false);
+    final noteProvider = Provider.of<NoteProvider>(context, listen: false);
+
+    // Ensure moods and notes are loaded
+    if (!moodProvider.isInitialized) {
+      await moodProvider.initialize();
+    }
+    await noteProvider
+        .loadNotes(); // Critical: Load notes so we can find duplicates!
+
+    final moods = moodProvider.getAllMoods();
+
+    // Notes to delete (duplicates)
+    final notesToDelete = <String>[];
+
+    for (final mood in moods) {
+      if (mood.notes.isNotEmpty) {
+        final dateKey = _getDateKey(mood.date);
+        final noteId = 'mood_$dateKey';
+
+        // 1. Ensure the Canonical Note exists (Upsert)
+        final newNote = Note(
+          id: noteId,
+          title: 'Mood: ${mood.label} ${mood.emoji}',
+          content: mood.notes,
+          createdAt: mood.date,
+          updatedAt: DateTime.now(),
+          tags: ['Mood', ...mood.tags],
+        );
+        await noteProvider
+            .addNote(newNote); // Updates if exists, creates if not
+
+        // 2. Identify duplicates for this day
+        // We look for notes that:
+        // - Are NOT the canonical ID
+        // - Have the 'Mood' tag
+        // - Have a title starting with 'Mood:'
+        // - Match the same date (approximate check via dateKey or simply day matching)
+
+        final duplicates = noteProvider.notes.where((n) {
+          if (n.id == noteId) return false; // Don't delete self
+
+          final isMood = n.tags.contains('Mood') || n.title.startsWith('Mood:');
+          if (!isMood) return false;
+
+          // Check date match
+          final nDateKey = _getDateKey(n.createdAt);
+          return nDateKey == dateKey;
+        });
+
+        for (final dup in duplicates) {
+          if (!notesToDelete.contains(dup.id)) {
+            notesToDelete.add(dup.id);
+          }
+        }
+      }
+    }
+
+    // Execute deletions
+    for (final id in notesToDelete) {
+      await noteProvider.deleteNote(id);
     }
   }
 
@@ -78,7 +149,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: theme.colorScheme.outline.withAlpha((0.1 * 255).round())),
+          border: Border.all(
+              color: theme.colorScheme.outline.withAlpha((0.1 * 255).round())),
           boxShadow: [
             BoxShadow(
               color: theme.colorScheme.primary.withAlpha((0.05 * 255).round()),
@@ -93,7 +165,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
             Container(
               width: 80,
               height: 80,
-                decoration: BoxDecoration(
+              decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -116,7 +188,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
               'Start documenting your habit journey!\nCapture insights, reflections, and progress.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha((0.7 * 255).round()),
+                color:
+                    theme.colorScheme.onSurface.withAlpha((0.7 * 255).round()),
                 height: 1.5,
               ),
             ),
@@ -130,7 +203,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   Widget _buildRoadmapView(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Group notes by date for roadmap structure
+    // Group notes by date
     final groupedNotes = <String, List<Note>>{};
     for (final note in _filteredNotes) {
       final dateKey = _getDateKey(note.createdAt);
@@ -144,123 +217,117 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       ..sort((a, b) => b.compareTo(a));
 
     return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
       child: Column(
         children: [
-          for (int dateIndex = 0; dateIndex < sortedDates.length; dateIndex++)
-            _buildRoadmapDateSection(
+          for (int i = 0; i < sortedDates.length; i++)
+            _buildDayTimeline(
               context,
-              sortedDates[dateIndex],
-              groupedNotes[sortedDates[dateIndex]]!,
-              dateIndex,
-              dateIndex == sortedDates.length - 1,
+              sortedDates[i],
+              groupedNotes[sortedDates[i]]!,
+              i == sortedDates.length - 1,
             ),
         ],
       ),
     );
   }
 
-  Widget _buildRoadmapDateSection(
-    BuildContext context,
-    String date,
-    List<Note> notes,
-    int index,
-    bool isLast,
-  ) {
+  Widget _buildDayTimeline(
+      BuildContext context, String dateStr, List<Note> notes, bool isLast) {
     final theme = Theme.of(context);
 
-    return Container(
-      margin: EdgeInsets.only(bottom: isLast ? 0 : 24),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Timeline line and dot
-          Column(
-            children: [
-              Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: theme.cardColor,
-                    width: 3,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withAlpha((0.3 * 255).round()),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ),
-              if (!isLast)
-                Container(
-                  width: 2,
-                  height: 72,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.primary.withAlpha((0.3 * 255).round()),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(width: 16),
+    // Sort notes: Mood first
+    final sortedNotes = List<Note>.from(notes)
+      ..sort((a, b) {
+        final aIsMood = a.tags.contains('Mood') || a.title.startsWith('Mood:');
+        final bIsMood = b.tags.contains('Mood') || b.title.startsWith('Mood:');
+        if (aIsMood && !bIsMood) return -1;
+        if (!aIsMood && bIsMood) return 1;
+        return b.createdAt.compareTo(a.createdAt);
+      });
 
-          // Content
+    final dateLabel = _formatDateDetailed(dateStr);
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Timeline Column
+          SizedBox(
+            width: 24,
+            child: Column(
+              children: [
+                // Dot (Start of Day)
+                Container(
+                  width: 16,
+                  height: 16,
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 2), // Align more with card top
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFA855F7), // Purple color
+                      width: 2.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFA855F7).withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFA855F7), // Purple center
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
+                // Line (Connects to next day)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    margin: const EdgeInsets.only(top: 4, bottom: 4),
+                    decoration: BoxDecoration(
+                      gradient: isLast
+                          ? null
+                          : LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                const Color(0xFFA855F7).withOpacity(0.8),
+                                const Color(0xFFA855F7).withOpacity(0.3),
+                              ],
+                            ),
+                      color: isLast ? Colors.transparent : null,
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Content Column
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date header
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withAlpha((0.2 * 255).round()),
-                    ),
+                // Notes List (Header removed, integrated into cards)
+                for (final note in sortedNotes)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildRoadmapNoteCard(context, note, dateLabel),
                   ),
-                  child: Text(
-                    _formatDate(date),
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
 
-                // Notes for this date
-                ...notes.asMap().entries.map((entry) {
-                  final noteIndex = entry.key;
-                  final note = entry.value;
-                  return Container(
-                    margin: EdgeInsets.only(
-                        bottom: noteIndex == notes.length - 1 ? 0 : 16),
-                    child: _buildRoadmapNoteCard(context, note),
-                  );
-                }),
+                // Extra spacing if not last
+                if (!isLast) const SizedBox(height: 8),
               ],
             ),
           ),
@@ -269,9 +336,9 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildRoadmapNoteCard(BuildContext context, Note note) {
+  Widget _buildRoadmapNoteCard(
+      BuildContext context, Note note, String dateLabel) {
     final theme = Theme.of(context);
-    // Try to find the associated habit to use its color
     final habitProvider = Provider.of<HabitProvider>(context, listen: false);
     Habit? habit;
     if (note.habitId != null) {
@@ -281,59 +348,89 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         habit = null;
       }
     }
-    final Color accentColor = habit?.color ?? theme.colorScheme.primary;
 
-    // Compute card background and border colors based on habit (if present)
-    // Use a slightly stronger tint so the habit color is more visible
-    // Stronger tint so habit color is clearly visible but still subtle
-    final Color cardBgColor = habit?.color.withAlpha((0.22 * 255).round()) ?? theme.cardColor;
-    final Color cardBorderColor = habit != null
-      ? accentColor.withAlpha((0.32 * 255).round())
-      : theme.colorScheme.outline.withAlpha((0.2 * 255).round());
+    final bool isMoodNote =
+        note.tags.contains('Mood') || note.title.startsWith('Mood:');
 
-    // Choose readable text color contrasted against the accent color when a habit is present
-    final bool useCustomTextColor = habit != null;
-    final Color contrastedTextColor = useCustomTextColor
-        ? (accentColor.computeLuminance() < 0.5 ? Colors.white : Colors.black87)
-        : theme.colorScheme.onSurface;
+    Color? moodColor;
+    String moodEmoji = '';
+
+    if (isMoodNote) {
+      final parts = note.title.split(' ');
+      if (parts.length >= 2) {
+        final label = parts[1];
+        if (parts.length >= 3) {
+          moodEmoji = parts.sublist(2).join(' ');
+        }
+
+        const moodColors = {
+          'Broken': Color(0xFF8B0000),
+          'Angry': Color(0xFFFF6B00),
+          'Sad': Color(0xFFFFB800),
+          'Anxious': Color(0xFF6B4423),
+          'Stressed': Color(0xFF5C4033),
+          'Tired': Color(0xFF4A5568),
+          'Neutral': Color(0xFF718096),
+          'Close': Color(0xFFFF69B4),
+          'Caring': Color(0xFFFFD700),
+          'Love': Color(0xFFFF1493),
+          'Energetic': Color(0xFF8B7500),
+          'Motivated': Color(0xFF4169E1),
+          'Excited': Color(0xFF7CFC00),
+          'Relaxed': Color(0xFF20B2AA),
+          'Happy': Color(0xFFFFD700),
+          'Pleasant': Color(0xFF87CEEB),
+        };
+        moodColor = moodColors[label];
+      }
+    }
+
+    final Color accentColor = isMoodNote
+        ? (moodColor ?? const Color(0xFF9B5DE5))
+        : (habit?.color ?? theme.colorScheme.primary);
+
+    final Color cardBgColor = theme.cardColor;
+    final Color headerBgColor = accentColor.withOpacity(0.15);
+    final Color cardBorderColor = theme.colorScheme.outline.withOpacity(0.1);
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.colorScheme.outline.withAlpha((0.2 * 255).round())),
+        color: cardBgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha((0.05 * 255).round()),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (note.habitId != null && habit != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: habit.color.withAlpha((0.15 * 255).round()),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
-                ),
+          // Header Section
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: headerBgColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
               ),
-              child: Row(
-                children: [
+            ),
+            child: Row(
+              children: [
+                if (note.habitId != null && habit != null) ...[
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: habit.color.withAlpha((0.2 * 255).round()),
+                      color: habit.color.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Icon(
                       habit.icon,
-                      size: 12,
+                      size: 14,
                       color: habit.color,
                     ),
                   ),
@@ -341,62 +438,101 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                   Expanded(
                     child: Text(
                       habit.name,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: habit.color,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: habit.color.withOpacity(0.9),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  // Date for Habit
+                  Text(
+                    dateLabel,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: habit.color.withOpacity(0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ] else if (isMoodNote) ...[
+                  // Date Label (Replacing 'Mood')
+                  Text(
+                    dateLabel,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: accentColor.withOpacity(0.9),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  // Emoji (Replacing Icon)
+                  if (moodEmoji.isNotEmpty)
+                    Text(
+                      moodEmoji,
+                      style: const TextStyle(fontSize: 16),
+                    ),
                 ],
-              ),
+              ],
             ),
+          ),
+
+          // Body Section
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  note.title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
+                if (note.title.isNotEmpty && !isMoodNote)
+                  Text(
+                    note.title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                      fontSize: 15,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  note.content,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withAlpha((0.8 * 255).round()),
-                    height: 1.3,
+                if (isMoodNote)
+                  Text(
+                    note.content.isNotEmpty
+                        ? note.content
+                        : (note.title.split(' ').length > 1
+                            ? note.title.split(' ')[1]
+                            : ''),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
-                ),
-                if (note.tags.isNotEmpty) ...[
+                if (!isMoodNote && note.title.isNotEmpty)
                   const SizedBox(height: 4),
+                if (!isMoodNote)
+                  Text(
+                    note.content,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      height: 1.3,
+                    ),
+                  ),
+                if (note.tags.isNotEmpty && !isMoodNote) ...[
+                  const SizedBox(height: 8),
                   Wrap(
-                    spacing: 4,
+                    spacing: 6,
                     runSpacing: 4,
-                    children: note.tags
-                        .map((tag) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color:
-                                    theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                tag,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ))
-                        .toList(),
+                    children: note.tags.map((tag) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          tag,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ],
               ],
@@ -407,42 +543,31 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     );
   }
 
-  String _getDateKey(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  String _formatDate(String dateStr) {
+  String _formatDateDetailed(String dateStr) {
     try {
       final date = DateTime.parse(dateStr);
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final yesterday = today.subtract(const Duration(days: 1));
-      final noteDate = DateTime(date.year, date.month, date.day);
-
-      if (noteDate == today) {
-        return 'Today';
-      } else if (noteDate == yesterday) {
-        return 'Yesterday';
-      } else {
-        final months = [
-          'Jan',
-          'Feb',
-          'Mar',
-          'Apr',
-          'May',
-          'Jun',
-          'Jul',
-          'Aug',
-          'Sep',
-          'Oct',
-          'Nov',
-          'Dec'
-        ];
-        return '${months[date.month - 1]} ${date.day}, ${date.year}';
-      }
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ];
+      return '${months[date.month - 1]} ${date.day}, ${date.year}';
     } catch (e) {
       return dateStr;
     }
+  }
+
+  String _getDateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -451,7 +576,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
+        backgroundColor:
+            theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
         elevation: 0,
         titleSpacing: 0,
         title: Row(
@@ -477,6 +603,22 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.workspace_premium),
+            color: theme.colorScheme.onSurface,
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            color: theme.colorScheme.onSurface,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ProfileScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             splashRadius: 22,
             onPressed: () {
@@ -496,7 +638,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -508,7 +650,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                   color: theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                      color: theme.colorScheme.outline.withAlpha((0.2 * 255).round())),
+                      color: theme.colorScheme.outline
+                          .withAlpha((0.2 * 255).round())),
                 ),
                 child: TextField(
                   controller: _searchController,
