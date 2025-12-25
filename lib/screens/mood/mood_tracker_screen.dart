@@ -3,6 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
 import 'mood_entry_screen.dart';
 import '../profile/profile_screen.dart';
+import '../subscription/subscription_plans_screen.dart';
 import '../../widgets/mood_details_bottom_sheet.dart';
 import '../../providers/mood_provider.dart';
 import '../../providers/note_provider.dart';
@@ -74,13 +75,18 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.workspace_premium),
-                color: theme.colorScheme.onSurface,
+                color: const Color(0xFFFFD700),
+                iconSize: 28,
                 onPressed: () {
-                  // TODO: Premium feature
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const SubscriptionPlansScreen(),
+                    ),
+                  );
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.person_outline),
+                icon: const Icon(Icons.settings),
                 color: theme.colorScheme.onSurface,
                 onPressed: () {
                   Navigator.of(context).push(
@@ -267,7 +273,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
                 return null;
               },
             ),
-            onDaySelected: (selectedDay, focusedDay) {
+            onDaySelected: (selectedDay, focusedDay) async {
               setState(() {
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
@@ -313,6 +319,8 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
                       ),
                     );
 
+                    if (!context.mounted) return;
+
                     if (result != null && result is Map) {
                       await moodProvider.saveMood(
                         date: selectedDay,
@@ -327,6 +335,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
                       if (result['notes'] != null &&
                           result['notes'].toString().isNotEmpty) {
                         try {
+                          if (!context.mounted) return;
                           final noteProvider =
                               Provider.of<NoteProvider>(context, listen: false);
                           final dateKey =
@@ -354,52 +363,54 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
                 );
               } else {
                 // Open mood entry screen to create new entry
-                Navigator.of(context)
-                    .push(
+                // Open mood entry screen to create new entry
+                final result = await Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => MoodEntryScreen(
                       selectedDate: selectedDay,
                     ),
                   ),
-                )
-                    .then((result) async {
-                  // Handle saved mood data if returned
-                  if (result != null && result is Map<String, dynamic>) {
-                    await moodProvider.saveMood(
-                      date: selectedDay,
-                      emoji: result['emoji'] as String,
-                      label: result['label'] as String,
-                      tags: List<String>.from(result['tags'] as List),
-                      notes: result['notes'] as String,
-                      score: result['score'] as int? ?? 0,
-                    );
+                );
 
-                    // Sync Note
-                    if (result['notes'] != null &&
-                        result['notes'].toString().isNotEmpty) {
-                      try {
-                        final noteProvider =
-                            Provider.of<NoteProvider>(context, listen: false);
-                        final dateKey =
-                            '${selectedDay.year}-${selectedDay.month.toString().padLeft(2, '0')}-${selectedDay.day.toString().padLeft(2, '0')}';
-                        final newNote = Note(
-                          id: 'mood_$dateKey',
-                          title: 'Mood: ${result['label']} ${result['emoji']}',
-                          content: result['notes'],
-                          createdAt: selectedDay,
-                          updatedAt: DateTime.now(),
-                          tags: [
-                            'Mood',
-                            ...List<String>.from(result['tags'] as List)
-                          ],
-                        );
-                        await noteProvider.addNote(newNote);
-                      } catch (e) {
-                        debugPrint('Error syncing mood note: $e');
-                      }
+                if (!context.mounted) return;
+
+                // Handle saved mood data if returned
+                if (result != null && result is Map<String, dynamic>) {
+                  await moodProvider.saveMood(
+                    date: selectedDay,
+                    emoji: result['emoji'] as String,
+                    label: result['label'] as String,
+                    tags: List<String>.from(result['tags'] as List),
+                    notes: result['notes'] as String,
+                    score: result['score'] as int? ?? 0,
+                  );
+
+                  // Sync Note
+                  if (result['notes'] != null &&
+                      result['notes'].toString().isNotEmpty) {
+                    try {
+                      if (!context.mounted) return;
+                      final noteProvider =
+                          Provider.of<NoteProvider>(context, listen: false);
+                      final dateKey =
+                          '${selectedDay.year}-${selectedDay.month.toString().padLeft(2, '0')}-${selectedDay.day.toString().padLeft(2, '0')}';
+                      final newNote = Note(
+                        id: 'mood_$dateKey',
+                        title: 'Mood: ${result['label']} ${result['emoji']}',
+                        content: result['notes'],
+                        createdAt: selectedDay,
+                        updatedAt: DateTime.now(),
+                        tags: [
+                          'Mood',
+                          ...List<String>.from(result['tags'] as List)
+                        ],
+                      );
+                      await noteProvider.addNote(newNote);
+                    } catch (e) {
+                      debugPrint('Error syncing mood note: $e');
                     }
                   }
-                });
+                }
               }
             },
             onPageChanged: (focusedDay) {
@@ -527,6 +538,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
                           if (result['notes'] != null &&
                               result['notes'].toString().isNotEmpty) {
                             try {
+                              if (!context.mounted) return;
                               final noteProvider = Provider.of<NoteProvider>(
                                   context,
                                   listen: false);

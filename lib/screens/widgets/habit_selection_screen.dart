@@ -99,7 +99,7 @@ class _HabitSelectionScreenState extends State<HabitSelectionScreen> {
 
           return ListView.builder(
             itemCount: habitProvider.habits.length,
-            itemBuilder: (context, index) {
+            itemBuilder: (ctx, index) {
               final habit = habitProvider.habits[index];
               return ListTile(
                 title: Text(habit.name),

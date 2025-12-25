@@ -800,8 +800,12 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                 final habitProvider =
                     Provider.of<HabitProvider>(context, listen: false);
                 await habitProvider.deleteHabit(habit.id, isPremium: isPremium);
-                Navigator.of(dialogContext).pop(); // Dialog
-                Navigator.of(context).pop(); // Screen
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop(); // Dialog
+                }
+                if (context.mounted) {
+                  Navigator.of(context).pop(); // Screen
+                }
               },
               child: const Text('Delete'),
             ),

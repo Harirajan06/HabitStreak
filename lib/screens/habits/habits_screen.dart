@@ -55,8 +55,9 @@ class _HabitsScreenState extends State<HabitsScreen>
     final theme = Theme.of(context);
 
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
+      appBar: AppBar(
+        backgroundColor:
+            theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
         elevation: 0,
         titleSpacing: 0,
         title: Row(
@@ -100,7 +101,7 @@ class _HabitsScreenState extends State<HabitsScreen>
             },
           ),
           IconButton(
-            icon: const Icon(Icons.person_outline, size: 24),
+            icon: const Icon(Icons.settings, size: 24),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -129,7 +130,10 @@ class _HabitsScreenState extends State<HabitsScreen>
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withAlpha((0.2 * 255).round())),
+                color: Theme.of(context)
+                    .colorScheme
+                    .outline
+                    .withAlpha((0.2 * 255).round())),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -137,8 +141,10 @@ class _HabitsScreenState extends State<HabitsScreen>
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color:
-                        Theme.of(context).colorScheme.primary.withAlpha((0.15 * 255).round()),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withAlpha((0.15 * 255).round()),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
@@ -163,7 +169,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                       color: Theme.of(context)
                           .colorScheme
                           .onSurface
-                    .withAlpha((0.6 * 255).round()),
+                          .withAlpha((0.6 * 255).round()),
                     ),
               ),
               const SizedBox(height: 24),
@@ -251,7 +257,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                                 color: Theme.of(context)
                                     .colorScheme
                                     .primary
-                                     .withAlpha((0.8 * 255).round()),
+                                    .withAlpha((0.8 * 255).round()),
                                 fontSize: 26,
                               ),
                     ),

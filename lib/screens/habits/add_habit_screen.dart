@@ -24,6 +24,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _descriptionFocusNode = FocusNode();
   final _uuid = const Uuid();
 
   IconData _selectedIcon = Icons.star;
@@ -157,6 +158,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _descriptionFocusNode.dispose();
     super.dispose();
   }
 
@@ -345,6 +347,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         const SizedBox(height: 16),
         _buildModernTextField(
           controller: _descriptionController,
+          focusNode: _descriptionFocusNode,
           label: 'Description (Optional)',
           hint: 'Why do you want to build this habit?',
           icon: Icons.notes_outlined,
@@ -403,6 +406,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 final isSelected = icon == _selectedIcon;
                 return GestureDetector(
                   onTap: () {
+                    FocusScope.of(context).unfocus();
                     setState(() {
                       _selectedIcon = icon;
                     });
@@ -489,6 +493,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 final isSelected = color == _selectedColor;
                 return GestureDetector(
                   onTap: () {
+                    FocusScope.of(context).unfocus();
                     setState(() {
                       _selectedColor = color;
                     });
@@ -553,6 +558,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: GestureDetector(
                   onTap: () {
+                    FocusScope.of(context).unfocus();
                     setState(() {
                       _selectedHabitType = habitType;
                     });
@@ -661,6 +667,9 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             if (_reminderTimes.length < _remindersPerDay)
               TextButton.icon(
                 onPressed: () async {
+                  // Unfocus any text fields to prevent keyboard from popping up after dialog
+                  FocusScope.of(context).unfocus();
+
                   final picked = await showTimePicker(
                     context: context,
                     initialTime: TimeOfDay.now(),
@@ -670,6 +679,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       _reminderTimes.add(picked);
                       _reminderTimes.sort((a, b) => (a.hour * 60 + a.minute)
                           .compareTo(b.hour * 60 + b.minute));
+                    });
+
+                    // Request focus on description after time selection
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        _descriptionFocusNode.requestFocus();
+                      }
                     });
                   }
                 },
@@ -770,6 +786,9 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   },
                 ),
                 onTap: () async {
+                  // Unfocus any text fields to prevent keyboard from popping up after dialog
+                  FocusScope.of(context).unfocus();
+
                   final picked = await showTimePicker(
                     context: context,
                     initialTime: time,
@@ -779,6 +798,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       _reminderTimes[index] = picked;
                       _reminderTimes.sort((a, b) => (a.hour * 60 + a.minute)
                           .compareTo(b.hour * 60 + b.minute));
+                    });
+
+                    // Request focus on description after time selection
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        _descriptionFocusNode.requestFocus();
+                      }
                     });
                   }
                 },
@@ -851,7 +877,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   _buildIncrementButton(
                     icon: Icons.remove,
                     onPressed: _remindersPerDay > 1
-                        ? () => setState(() => _remindersPerDay--)
+                        ? () {
+                            FocusScope.of(context).unfocus();
+                            setState(() => _remindersPerDay--);
+                          }
                         : null,
                   ),
                   SizedBox(
@@ -868,7 +897,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   _buildIncrementButton(
                     icon: Icons.add,
                     onPressed: _remindersPerDay < 10
-                        ? () => setState(() => _remindersPerDay++)
+                        ? () {
+                            FocusScope.of(context).unfocus();
+                            setState(() => _remindersPerDay++);
+                          }
                         : null,
                   ),
                 ],
@@ -917,6 +949,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     IconData? icon,
     int maxLines = 1,
     String? Function(String?)? validator,
+    FocusNode? focusNode,
   }) {
     final theme = Theme.of(context);
 
@@ -930,6 +963,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       ),
       child: TextFormField(
         controller: controller,
+        focusNode: focusNode,
         maxLines: maxLines,
         validator: validator,
         style: theme.textTheme.bodyLarge?.copyWith(

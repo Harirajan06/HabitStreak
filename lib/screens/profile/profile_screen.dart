@@ -18,6 +18,7 @@ import '../auth/splash_screen.dart';
 
 import '../subscription/subscription_plans_screen.dart';
 import '../../widgets/hero_stats_card.dart';
+import 'support_dialog.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -326,7 +327,7 @@ class ProfileScreen extends StatelessWidget {
             _buildMenuItem(
               context,
               title: 'Backup Data',
-              subtitle: 'Export or import your habits, notes, and settings',
+              subtitle: 'Export or import your habits, notes',
               icon: Icons.cloud_sync,
               iconColor: Colors.tealAccent,
               onTap: () => _showBackupDialog(context),
@@ -334,22 +335,24 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        _buildMenuCard(
-          context,
-          [
-            _buildMenuItem(
-              context,
-              title: 'Reset Widget Configuration',
-              subtitle: 'Clear widget habit selection',
-              icon: Icons.widgets_outlined,
-              iconColor: Colors.orangeAccent,
-              onTap: () {
-                _showResetWidgetDialog(context);
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
+        if (Platform.isIOS) ...[
+          _buildMenuCard(
+            context,
+            [
+              _buildMenuItem(
+                context,
+                title: 'Reset Widget Configuration',
+                subtitle: 'Clear widget habit selection',
+                icon: Icons.widgets_outlined,
+                iconColor: Colors.orangeAccent,
+                onTap: () {
+                  _showResetWidgetDialog(context);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
 
         // Modified "Share App" Menu Item
         _buildMenuCard(
@@ -916,132 +919,10 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _showSupportDialog(BuildContext context) {
-    final emailController = TextEditingController();
-    final messageController = TextEditingController();
-    final theme = Theme.of(context);
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.help_outline,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text('Help & Support'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Your Email',
-                  hintText: 'Enter your email address',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: messageController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  labelText: 'Message',
-                  hintText: 'How can we help you?',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                  color: theme.colorScheme.onSurface
-                      .withAlpha((0.6 * 255).round())),
-            ),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final email = emailController.text.trim();
-              final message = messageController.text.trim();
-
-              if (email.isEmpty || !email.contains('@')) {
-                final messenger = ScaffoldMessenger.of(context);
-                messenger.showSnackBar(
-                  const SnackBar(
-                      content: Text('Please enter a valid email address')),
-                );
-                return;
-              }
-
-              if (message.isEmpty) {
-                final messenger = ScaffoldMessenger.of(context);
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Please enter your message')),
-                );
-                return;
-              }
-
-              // Launch email client with pre-filled content
-              final Uri emailUri = Uri(
-                scheme: 'mailto',
-                path: 'habitmakerc@gmail.com',
-                query:
-                    'subject=Streakly Support Request&body=${Uri.encodeComponent(message)}\n\nFrom: $email',
-              );
-
-              final navigator = Navigator.of(context);
-              final messenger = ScaffoldMessenger.of(context);
-
-              try {
-                await launchUrl(emailUri);
-                navigator.pop();
-                messenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('Opening email client...'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              } catch (_) {
-                messenger.showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                        'Could not open email client. Please send your message to habitmakerc@gmail.com'),
-                    duration: Duration(seconds: 4),
-                  ),
-                );
-              }
-            },
-            child: const Text('Send'),
-          ),
-        ],
-      ),
-    ).then((_) {
-      // Clean up controllers
-      emailController.dispose();
-      messageController.dispose();
-    });
+      builder: (context) => const SupportDialog(),
+    );
   }
 
   void _showSignOutDialog(BuildContext context) {
@@ -1263,7 +1144,9 @@ class ProfileScreen extends StatelessWidget {
         // Refresh habits data after successful import
         if (context.mounted) {
           await Provider.of<HabitProvider>(context, listen: false).loadHabits();
-          await Provider.of<NoteProvider>(context, listen: false).loadNotes();
+          if (context.mounted) {
+            await Provider.of<NoteProvider>(context, listen: false).loadNotes();
+          }
         }
         messenger.showSnackBar(
           SnackBar(

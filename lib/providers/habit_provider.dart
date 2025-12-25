@@ -271,16 +271,18 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
       _widgetService.updateWidgetForHabit(_habits[index],
           isDarkMode: _isDarkMode);
 
-      // Show ad only on increments, not resets?
-      if (newCount > currentCount) {
-        _admobService.showInterstitialAd(isPremium: isPremium);
-      }
+      // Ad logic moved to popup on completion
+      // if (newCount > currentCount) {
+      //   _admobService.showInterstitialAd(isPremium: isPremium);
+      // }
 
       if (context != null &&
           newCount == habit.remindersPerDay &&
           newCount > 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showHabitCompletionPopup(context, habit);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showHabitCompletionPopup(context, habit, isPremium);
+          });
         });
       }
 
@@ -327,7 +329,8 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
     }
   }
 
-  void _showHabitCompletionPopup(BuildContext context, Habit habit) {
+  void _showHabitCompletionPopup(
+      BuildContext context, Habit habit, bool isPremium) {
     showDialog(
       context: context,
       barrierDismissible: true, // Allow dismissing by tapping outside
@@ -336,6 +339,9 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
         customMessage: 'You completed it ${habit.remindersPerDay}x today! 🎉',
         habitIcon: habit.icon,
         habitColor: habit.color,
+        onAwesomePressed: () {
+          _admobService.showInterstitialAd(isPremium: isPremium);
+        },
       ),
     );
   }

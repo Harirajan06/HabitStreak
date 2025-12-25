@@ -356,7 +356,9 @@ class RemindersScreen extends StatelessWidget {
                                           content: Text(
                                               'Cancelled reminder ${req.title ?? ''}')));
                                 }
-                                Navigator.of(context).pop();
+                                if (context.mounted) {
+                                  Navigator.of(context).pop();
+                                }
                               },
                             ),
                           ],

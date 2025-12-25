@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../profile/profile_screen.dart';
+import '../subscription/subscription_plans_screen.dart';
 import 'package:provider/provider.dart';
 import '../../providers/mood_provider.dart';
 import '../../providers/note_provider.dart';
@@ -246,6 +247,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         return b.createdAt.compareTo(a.createdAt);
       });
 
+    final bool hasMoodNote = notes
+        .any((n) => n.tags.contains('Mood') || n.title.startsWith('Mood:'));
     final dateLabel = _formatDateDetailed(dateStr);
 
     return IntrinsicHeight(
@@ -323,7 +326,16 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                 for (final note in sortedNotes)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildRoadmapNoteCard(context, note, dateLabel),
+                    child: _buildRoadmapNoteCard(
+                      context,
+                      note,
+                      // Pass dateLabel only if it's a mood note OR if there are no mood notes for this day
+                      (note.tags.contains('Mood') ||
+                              note.title.startsWith('Mood:') ||
+                              !hasMoodNote)
+                          ? dateLabel
+                          : '',
+                    ),
                   ),
 
                 // Extra spacing if not last
@@ -446,13 +458,14 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                   ),
                   const SizedBox(width: 8),
                   // Date for Habit
-                  Text(
-                    dateLabel,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: habit.color.withOpacity(0.7),
-                      fontWeight: FontWeight.w500,
+                  if (dateLabel.isNotEmpty)
+                    Text(
+                      dateLabel,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: habit.color.withOpacity(0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
                 ] else if (isMoodNote) ...[
                   // Date Label (Replacing 'Mood')
                   Text(
@@ -604,11 +617,18 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         actions: [
           IconButton(
             icon: const Icon(Icons.workspace_premium),
-            color: theme.colorScheme.onSurface,
-            onPressed: () {},
+            color: const Color(0xFFFFD700),
+            iconSize: 28,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SubscriptionPlansScreen(),
+                ),
+              );
+            },
           ),
           IconButton(
-            icon: const Icon(Icons.person_outline),
+            icon: const Icon(Icons.settings),
             color: theme.colorScheme.onSurface,
             onPressed: () {
               Navigator.of(context).push(

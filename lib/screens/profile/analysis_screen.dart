@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../providers/habit_provider.dart';
 import '../../models/habit.dart';
+import '../../screens/subscription/subscription_plans_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'profile_screen.dart';
@@ -57,9 +58,16 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SubscriptionPlansScreen(),
+                ),
+              );
+            },
             icon: const Icon(Icons.workspace_premium),
-            color: theme.colorScheme.onSurface,
+            color: const Color(0xFFFFD700),
+            iconSize: 28,
           ),
           IconButton(
             onPressed: () {
@@ -69,7 +77,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                 ),
               );
             },
-            icon: const Icon(Icons.person_outline),
+            icon: const Icon(Icons.settings),
             color: theme.colorScheme.onSurface,
           ),
           const SizedBox(width: 8),
