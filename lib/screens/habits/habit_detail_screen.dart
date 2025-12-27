@@ -32,7 +32,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
   List<Note> _recentNotes = [];
   bool _isLoadingNotes = true;
   DateTime _focusedDay = DateTime.now();
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  final CalendarFormat _calendarFormat = CalendarFormat.month;
 
   @override
   void initState() {

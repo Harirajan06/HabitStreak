@@ -16,7 +16,11 @@ import 'services/hive_service.dart';
 import 'notification_initializer.dart';
 import 'services/purchase_service.dart';
 import 'services/widget_service.dart';
+
 import 'screens/widgets/widget_habit_selection_screen.dart';
+
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -100,7 +104,8 @@ class StreaklyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'Streakly - Habit Tracker',
+          scaffoldMessengerKey: scaffoldMessengerKey,
+          title: 'HabitSensai - Habit Tracker',
           debugShowCheckedModeBanner: false,
           themeMode: themeProvider.themeMode,
           theme: ThemeData(

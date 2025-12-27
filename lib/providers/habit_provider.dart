@@ -6,6 +6,7 @@ import '../widgets/congratulations_popup.dart';
 import '../services/hive_service.dart';
 import '../services/admob_service.dart'; // Import AdmobService
 import '../services/widget_service.dart';
+import '../services/sound_service.dart';
 
 class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
   final List<Habit> _habits = [];
@@ -279,6 +280,9 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
       if (context != null &&
           newCount == habit.remindersPerDay &&
           newCount > 0) {
+        // Play completion sound
+        SoundService.instance.playCompletionSound();
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _showHabitCompletionPopup(context, habit, isPremium);

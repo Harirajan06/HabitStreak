@@ -1,422 +1,270 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import '../../services/purchase_service.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 
 class SubscriptionPlansScreen extends StatefulWidget {
   const SubscriptionPlansScreen({super.key});
 
   @override
-  State<SubscriptionPlansScreen> createState() => _SubscriptionPlansScreenState();
+  State<SubscriptionPlansScreen> createState() =>
+      _SubscriptionPlansScreenState();
 }
 
 class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
-  List<ProductDetails> _products = [];
-  bool _loading = true;
-  bool _isPremium = false;
-  StreamSubscription<String>? _statusSubscription;
+  bool _isLoading = true;
+  Offerings? _offerings;
 
   @override
   void initState() {
     super.initState();
-    _initSubscription();
-    _setupPurchaseListener();
+    _fetchOfferings();
   }
 
-  @override
-  void dispose() {
-    _statusSubscription?.cancel();
-    super.dispose();
-  }
-
-  void _setupPurchaseListener() {
-    _statusSubscription = PurchaseService.instance.statusStream.listen((status) {
-      if (!mounted) return;
-
-      if (status == 'pending') {
-        setState(() => _loading = true);
-      } else {
-        setState(() => _loading = false);
-        
-        if (status == 'success') {
-          _refreshPremiumStatus();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Purchase successful! Premium features unlocked.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else if (status == 'canceled') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Purchase canceled')),
-          );
-        } else if (status.startsWith('error')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(status.substring(7)), // Remove 'error: ' prefix
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    });
-  }
-
-  Future<void> _refreshPremiumStatus() async {
-    final Box settings = Hive.box('settings_box');
-    setState(() {
-      _isPremium = settings.get('isPremium', defaultValue: false) as bool;
-    });
-  }
-
-  Future<void> _initSubscription() async {
-    await PurchaseService.instance.init();
-    
-    // Check if the store is available
-    final bool available = await PurchaseService.instance.isAvailable;
-    if (!available) {
-      if (mounted) {
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Store not available. Please use a device with Google Play Store.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-      return;
-    }
-
-    try {
-      final prods = await PurchaseService.instance.queryProducts();
-      if (mounted) {
-        setState(() {
-          _products = prods;
-          _loading = false;
-        });
-        _refreshPremiumStatus();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load products: $e')),
-        );
-      }
+  Future<void> _fetchOfferings() async {
+    final offerings = await PurchaseService.instance.getOfferings();
+    if (mounted) {
+      setState(() {
+        _offerings = offerings;
+        _isLoading = false;
+      });
     }
   }
 
-  Future<void> _buy(ProductDetails product) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Purchase'),
-        content: Text('Do you want to subscribe to ${product.title}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Subscribe'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      setState(() => _loading = true);
-      await PurchaseService.instance.buyProduct(product);
-      // Loading state will be handled by the stream listener
+  Future<void> _purchasePackage(Package package) async {
+    setState(() => _isLoading = true);
+    await PurchaseService.instance.purchasePackage(package);
+    if (mounted) {
+      setState(() => _isLoading = false);
+      // Logic to close or show success is handled by listeners or manual check
+      // Ideally we check if premium is now true and pop
+      Navigator.pop(context); // Or show success dialog
     }
   }
 
-  Future<void> _restore() async {
-    setState(() => _loading = true);
+  Future<void> _restorePurchases() async {
+    setState(() => _isLoading = true);
     await PurchaseService.instance.restorePurchases();
-    // Loading state will be handled by the stream listener
-  }
-
-  Widget _buildPlanCard({
-    required BuildContext context,
-    required String title,
-    required String price,
-    required String duration,
-    required List<String> features,
-    required Color accentColor,
-    bool isPopular = false,
-    ProductDetails? product,
-  }) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: title == 'Free'
-              ? Colors.white
-              : title == 'Monthly Pro'
-                  ? const Color(0xFF9B5DE5) // Bright Purple
-                  : const Color(0xFFFFD700),
-          width: 2,
-        ),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            if (isPopular) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Most Popular',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-            Text(
-              title,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: price,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      color: accentColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  TextSpan(
-                    text: duration,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withAlpha((0.7 * 255).round()),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            ...features.map((feature) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.check_circle,
-                    color: accentColor,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      feature,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: title == 'Free' || product == null || _isPremium ? null : () => _buy(product),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: title == 'Free'
-                      ? Colors.white
-                      : title == 'Monthly Pro'
-                          ? const Color(0xFF9B5DE5) // Bright Purple
-                          : const Color(0xFFFFD700),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  foregroundColor: title == 'Free' || title == 'Yearly Pro'
-                      ? Colors.black // Black text for white and gold buttons
-                      : Colors.white, // White text for purple button
-                ),
-                child: Text(
-                  title == 'Free' ? 'Current Plan' : (_isPremium ? 'Purchased' : 'Subscribe'),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    if (mounted) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Restore completed')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    // Define feature list
+    final features = [
+      {'icon': Icons.all_inclusive, 'text': 'Unlimited Habits'},
+      {'icon': Icons.block, 'text': 'No Ads'},
+      {'icon': Icons.show_chart, 'text': 'Advanced Analytics'},
+      {'icon': Icons.cloud_upload, 'text': 'Data Backup & Export'},
+      {'icon': Icons.support_agent, 'text': 'Priority Support'},
+    ];
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(
-          'Subscription Plans',
-          style: TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            Text(
-              'Choose Your Plan',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Select the perfect plan for your needs',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha((0.7 * 255).round()),
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (_isPremium)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.withAlpha((0.1 * 255).round()),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: Colors.green),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Premium Active',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header
+                  const SizedBox(height: 10),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFFFD700).withOpacity(0.1),
+                      ),
+                      child: const Icon(
+                        Icons.workspace_premium,
+                        size: 60,
+                        color: Color(0xFFFFD700),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Unlock Streakly Pro',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Build better habits with unlimited access to all features.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Features List
+                  ...features.map((feature) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Row(
+                          children: [
+                            Icon(
+                              feature['icon'] as IconData,
+                              color: const Color(0xFFFFD700),
+                              size: 24,
+                            ),
+                            const SizedBox(width: 16),
+                            Text(
+                              feature['text'] as String,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          'You have access to all features',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                          ),
+                      )),
+
+                  const SizedBox(height: 40),
+
+                  // Packages
+                  if (_offerings != null &&
+                      _offerings!.current != null &&
+                      _offerings!.current!.availablePackages.isNotEmpty) ...[
+                    ..._offerings!.current!.availablePackages.map((package) {
+                      final isAnnual =
+                          package.packageType == PackageType.annual;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildPackageCard(
+                          context,
+                          package,
+                          isBestValue: isAnnual,
+                          onTap: () => _purchasePackage(package),
                         ),
-                      ],
+                      );
+                    }),
+                  ] else ...[
+                    const Center(
+                      child: Text('No plans available right now.'),
                     ),
                   ],
-                ),
-              ),
-            _buildPlanCard(
-              context: context,
-              title: 'Free',
-              price: '₹0',
-              duration: '/forever',
-              accentColor: Colors.grey,
-              features: [
-                'Create up to 3 habits',
-                'Basic habit tracking',
-                'Daily reminders',
-                'Progress statistics',
-              ],
-            ),
-            _buildPlanCard(
-              context: context,
-              title: 'Monthly Pro',
-              price: '₹99',
-              duration: '/month',
-              accentColor: theme.colorScheme.primary,
-              isPopular: true,
-              product: _products.isNotEmpty 
-                  ? _products.firstWhere(
-                      (p) => p.id.contains('monthly'), 
-                      orElse: () => _products.first
-                    ) 
-                  : null,
-              features: [
-                'Unlimited habits',
-                'Advanced analytics',
-                'Priority support',
-                'Custom habit icons',
-                'Multiple reminders per habit',
-                'Export data & insights',
-              ],
-            ),
-            _buildPlanCard(
-              context: context,
-              title: 'Yearly Pro',
-              price: '₹999',
-              duration: '/year',
-              accentColor: const Color(0xFFFFD700), // Gold color
-              product: _products.isNotEmpty 
-                  ? _products.firstWhere(
-                      (p) => p.id.contains('yearly'), 
-                      orElse: () => _products.first
-                    ) 
-                  : null,
-              features: [
-                'All Monthly Pro features',
-                '2 months free',
-                'Early access to new features',
-                'Premium habit templates',
-                'Advanced habit insights',
-                'Personal habit coach AI',
-              ],
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _restore,
-                      icon: const Icon(Icons.restore),
-                      label: const Text('Restore Purchases'),
+
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: _restorePurchases,
+                    child: Text(
+                      'Restore Purchases',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildPackageCard(BuildContext context, Package package,
+      {bool isBestValue = false, required VoidCallback onTap}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isBestValue
+              ? const Color(0xFFFFD700).withOpacity(0.1)
+              : (isDark ? Colors.grey[850] : Colors.grey[50]),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isBestValue
+                ? const Color(0xFFFFD700)
+                : theme.colorScheme.outline.withOpacity(0.2),
+            width: isBestValue ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (isBestValue) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFD700),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'BEST VALUE',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Text(
+                    package.storeProduct.title.split(' (').first, // Clean title
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    package.storeProduct.description,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  package.storeProduct.priceString,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isBestValue
+                        ? const Color(0xFFFFD700)
+                        : theme.colorScheme.primary,
+                  ),
+                ),
+                Text(
+                  isBestValue ? '/ year' : '/ month',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

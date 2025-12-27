@@ -34,6 +34,7 @@ class WidgetConfigureActivity : AppCompatActivity() {
         val launch = Intent(this, MainActivity::class.java)
         launch.putExtra("WIDGET_CONFIG_MODE", true)
         launch.putExtra("APPWIDGET_ID", appWidgetId)
+        android.util.Log.d("StreaklyNative", "WidgetConfigureActivity starting MainActivity for result with ID: $appWidgetId")
         // Note: Do NOT add FLAG_ACTIVITY_NEW_TASK when using startActivityForResult
         startActivityForResult(launch, REQ_SELECT_HABIT)
     }

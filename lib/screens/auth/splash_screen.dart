@@ -142,13 +142,27 @@ class _SplashScreenState extends State<SplashScreen>
                       height: 150,
                     ),
                     const SizedBox(height: 24),
-                    Text(
-                      'Streakly',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                        letterSpacing: 1.2,
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Habit',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'Sensai',
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 8),

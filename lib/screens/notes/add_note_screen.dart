@@ -26,11 +26,9 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
   final _uuid = const Uuid();
-  
+
   String? _selectedHabitId;
   String? _selectedHabitName;
-  List<String> _tags = [];
-  final _tagController = TextEditingController();
 
   @override
   void initState() {
@@ -49,14 +47,13 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     _contentController.text = note.content;
     _selectedHabitId = note.habitId;
     _selectedHabitName = note.habitName;
-    _tags = List.from(note.tags);
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
-    _tagController.dispose();
+
     super.dispose();
   }
 
@@ -73,7 +70,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
       habitName: _selectedHabitName,
       createdAt: widget.noteToEdit?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
-      tags: _tags,
+      tags: widget.noteToEdit?.tags ?? [],
     );
 
     if (widget.noteToEdit != null) {
@@ -86,8 +83,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(widget.noteToEdit != null 
-              ? 'Note updated successfully!' 
+          content: Text(widget.noteToEdit != null
+              ? 'Note updated successfully!'
               : 'Note created successfully!'),
           backgroundColor: Colors.green,
         ),
@@ -95,26 +92,10 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     }
   }
 
-  void _addTag() {
-    final tag = _tagController.text.trim();
-    if (tag.isNotEmpty && !_tags.contains(tag)) {
-      setState(() {
-        _tags.add(tag);
-        _tagController.clear();
-      });
-    }
-  }
-
-  void _removeTag(String tag) {
-    setState(() {
-      _tags.remove(tag);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.noteToEdit != null ? 'Edit Note' : 'Add New Note'),
@@ -158,16 +139,16 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   },
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Habit Selection
               _buildSectionCard(
                 title: 'Related Habit (Optional)',
                 child: Consumer<HabitProvider>(
                   builder: (context, habitProvider, child) {
                     final habits = habitProvider.activeHabits;
-                    
+
                     return DropdownButtonFormField<String?>(
                       value: _selectedHabitId,
                       decoration: const InputDecoration(
@@ -180,29 +161,30 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                           child: Text('No habit selected'),
                         ),
                         ...habits.map((habit) => DropdownMenuItem<String?>(
-                          value: habit.id,
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 12,
-                                backgroundColor: habit.color,
-                                child: Icon(
-                                  habit.icon,
-                                  size: 14,
-                                  color: Colors.white,
-                                ),
+                              value: habit.id,
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: habit.color,
+                                    child: Icon(
+                                      habit.icon,
+                                      size: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(habit.name),
+                                ],
                               ),
-                              const SizedBox(width: 8),
-                              Text(habit.name),
-                            ],
-                          ),
-                        )),
+                            )),
                       ],
                       onChanged: (value) {
                         setState(() {
                           _selectedHabitId = value;
                           if (value != null) {
-                            final habit = habits.firstWhere((h) => h.id == value);
+                            final habit =
+                                habits.firstWhere((h) => h.id == value);
                             _selectedHabitName = habit.name;
                           } else {
                             _selectedHabitName = null;
@@ -213,9 +195,9 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   },
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Content Field
               _buildSectionCard(
                 title: 'Content',
@@ -223,7 +205,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   controller: _contentController,
                   maxLines: 8,
                   decoration: const InputDecoration(
-                    hintText: 'Write your thoughts, insights, or reflections...',
+                    hintText:
+                        'Write your thoughts, insights, or reflections...',
                     border: InputBorder.none,
                   ),
                   validator: (value) {
@@ -234,62 +217,18 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   },
                 ),
               ),
-              
-              const SizedBox(height: 16),
-              
-              // Tags Section
-              _buildSectionCard(
-                title: 'Tags',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Tag input
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _tagController,
-                            decoration: const InputDecoration(
-                              hintText: 'Add a tag...',
-                              border: InputBorder.none,
-                            ),
-                            onSubmitted: (_) => _addTag(),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: _addTag,
-                          icon: const Icon(Icons.add),
-                        ),
-                      ],
-                    ),
-                    
-                    // Tag chips
-                    if (_tags.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: _tags.map((tag) => Chip(
-                          label: Text(tag),
-                          onDeleted: () => _removeTag(tag),
-                          backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                          deleteIconColor: theme.colorScheme.primary,
-                        )).toList(),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Save Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _saveNote,
-                  icon: Icon(widget.noteToEdit != null ? Icons.update : Icons.save),
-                  label: Text(widget.noteToEdit != null ? 'Update Note' : 'Save Note'),
+                  icon: Icon(
+                      widget.noteToEdit != null ? Icons.update : Icons.save),
+                  label: Text(
+                      widget.noteToEdit != null ? 'Update Note' : 'Save Note'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -310,7 +249,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     required Widget child,
   }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),

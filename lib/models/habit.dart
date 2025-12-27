@@ -183,7 +183,7 @@ class Habit {
       'icon': icon.codePoint,
       'color': color.value,
       'currentStreak': currentStreak,
-      'isCompletedToday': isCompletedToday(),
+      'isCompletedToday': isFullyCompletedToday(),
       'remindersPerDay': remindersPerDay,
       'dailyCompletions': getTodayCompletionCount(),
       'progressPercent': remindersPerDay > 0

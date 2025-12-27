@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:async'; // Added for StreamSubscription
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:uuid/uuid.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/hive_service.dart';
+import '../services/purchase_service.dart'; // Added PurchaseService
 import '../models/user.dart';
 import '../services/admob_service.dart'; // Import AdmobService
 
@@ -22,8 +24,27 @@ class AuthProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? get userAvatar => _currentUser?.avatarUrl;
 
+  StreamSubscription<bool>? _premiumStatusSubscription;
+
   AuthProvider(this._admobService) {
     _loadLocalUser();
+    _listenToPurchaseUpdates();
+  }
+
+  void _listenToPurchaseUpdates() {
+    _premiumStatusSubscription =
+        PurchaseService.instance.subscriptionStatusStream.listen((isPremium) {
+      debugPrint('AuthProvider: Received premium update: $isPremium');
+      if (_currentUser != null) {
+        setPremiumStatus(isPremium);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _premiumStatusSubscription?.cancel();
+    super.dispose();
   }
 
   AppUser? _findUserById(List<AppUser> users, String? id) {
@@ -48,21 +69,74 @@ class AuthProvider with ChangeNotifier {
   Future<void> _loadLocalUser() async {
     try {
       final settings = HiveService.instance.getSettings();
-      final currentUserId = settings['currentUserId'] as String?;
+      var currentUserId = settings['currentUserId'] as String?;
+      final users = HiveService.instance.getUsers();
+
+      if (currentUserId == null && users.isNotEmpty) {
+        // Recover: Pick first user if exists but no current ID
+        currentUserId = users.first.id;
+        settings['currentUserId'] = currentUserId;
+        await HiveService.instance.setSettings(settings);
+      }
+
       if (currentUserId != null) {
-        final users = HiveService.instance.getUsers();
         _currentUser = _findUserById(users, currentUserId);
         _isAuthenticated = _currentUser != null;
-        _admobService.loadInterstitialAd(isPremium: _currentUser?.premium ?? false);
+
+        // Sync with global premium status (from RevenueCat/PurchaseService)
+        if (_currentUser != null) {
+          final isPremiumGlobal = settings['isPremium'] ?? false;
+          if (isPremiumGlobal is bool &&
+              _currentUser!.premium != isPremiumGlobal) {
+            debugPrint(
+                'AuthProvider: Syncing user premium status with global settings ($isPremiumGlobal)');
+            _currentUser = _currentUser!.copyWith(premium: isPremiumGlobal);
+            try {
+              await HiveService.instance.updateUser(_currentUser!);
+            } catch (e) {
+              debugPrint(
+                  'AuthProvider: Failed to sync user premium status: $e');
+            }
+          }
+        }
       }
+
+      if (_currentUser == null) {
+        // No users at all (First Run or Cleared), create Guest User
+        debugPrint('AuthProvider: No user found. Creating Guest User.');
+        await _createGuestUser();
+      } else {
+        _admobService.loadInterstitialAd(
+            isPremium: _currentUser?.premium ?? false);
+      }
+
       notifyListeners();
     } catch (e) {
-      // ignore
+      debugPrint('AuthProvider: Error loading/creating user: $e');
     }
   }
 
+  Future<void> _createGuestUser() async {
+    final id = _uuid.v4();
+    final user = AppUser(
+      id: id,
+      email: 'guest@streakly.app',
+      name: 'Guest',
+      premium: false,
+      createdAt: DateTime.now(),
+    );
+    await HiveService.instance.addUser(user);
+    final settings = HiveService.instance.getSettings();
+    settings['currentUserId'] = id;
+    await HiveService.instance.setSettings(settings);
+    _currentUser = user;
+    _isAuthenticated = true;
+    _admobService.loadInterstitialAd(isPremium: false);
+  }
+
   // PIN & Biometric support (secure storage)
-  String _bytesToHex(List<int> bytes) => bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  String _bytesToHex(List<int> bytes) =>
+      bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 
   String _iteratedHash(String pin, String salt, int iterations) {
     // Simple iterated SHA-256 KDF (reasonable iterations)
@@ -75,11 +149,13 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> setPin(String pin, {int iterations = 10000}) async {
     try {
-      final salt = _bytesToHex(List<int>.generate(16, (_) => DateTime.now().microsecondsSinceEpoch.remainder(256)));
+      final salt = _bytesToHex(List<int>.generate(
+          16, (_) => DateTime.now().microsecondsSinceEpoch.remainder(256)));
       final hash = _iteratedHash(pin, salt, iterations);
       await _secureStorage.write(key: 'pin_salt', value: salt);
       await _secureStorage.write(key: 'pin_hash', value: hash);
-      await _secureStorage.write(key: 'pin_iters', value: iterations.toString());
+      await _secureStorage.write(
+          key: 'pin_iters', value: iterations.toString());
       return true;
     } catch (e) {
       return false;
@@ -118,7 +194,9 @@ class AuthProvider with ChangeNotifier {
       final settings = HiveService.instance.getSettings();
       final id = settings['currentUserId'] as String?;
       final users = HiveService.instance.getUsers();
-      final match = id != null ? _findUserById(users, id) : (users.isNotEmpty ? users.first : null);
+      final match = id != null
+          ? _findUserById(users, id)
+          : (users.isNotEmpty ? users.first : null);
       if (match != null) {
         _currentUser = match;
         _isAuthenticated = true;
@@ -147,7 +225,9 @@ class AuthProvider with ChangeNotifier {
         final settings = HiveService.instance.getSettings();
         final id = settings['currentUserId'] as String?;
         final users = HiveService.instance.getUsers();
-        final match = id != null ? _findUserById(users, id) : (users.isNotEmpty ? users.first : null);
+        final match = id != null
+            ? _findUserById(users, id)
+            : (users.isNotEmpty ? users.first : null);
         if (match != null) {
           _currentUser = match;
           _isAuthenticated = true;
@@ -222,6 +302,28 @@ class AuthProvider with ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> setPremiumStatus(bool isPremium) async {
+    if (_currentUser == null) {
+      debugPrint('AuthProvider: cannot set premium, currentUser is null');
+      return;
+    }
+    debugPrint('AuthProvider: setPremiumStatus called with $isPremium');
+
+    // Optimistic update
+    _currentUser = _currentUser!.copyWith(premium: isPremium);
+    _admobService.loadInterstitialAd(isPremium: isPremium);
+    notifyListeners();
+
+    try {
+      await HiveService.instance.updateUser(_currentUser!);
+      debugPrint('AuthProvider: Hive user updated successfully');
+    } catch (e) {
+      debugPrint('AuthProvider: Failed to save user premium status: $e');
+      // Revert on failure? Or just keep in-memory?
+      // For developer tool, keeping in-memory is fine, but let's log it contentiously.
     }
   }
 

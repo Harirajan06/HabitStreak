@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'habits/habit_grid_screen.dart';
 import 'habits/habits_screen.dart';
 import 'notes/notes_screen.dart';
+import 'notes/add_note_screen.dart';
 import 'habits/add_habit_screen.dart';
 import 'profile/analysis_screen.dart';
 import 'mood/mood_tracker_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/habit_provider.dart';
+import '../widgets/premium_lock_dialog.dart';
 import '../services/navigation_service.dart';
 import '../mixins/widget_logic_mixin.dart';
 
@@ -98,20 +103,43 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         ),
         child: FloatingActionButton(
           onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AddHabitScreen()),
-            );
+            if (_currentIndex == 3) {
+              // Notes Tab - Add Note
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AddNoteScreen()),
+              );
+            } else {
+              // Other Tabs - Add Habit
+              final authProvider =
+                  Provider.of<AuthProvider>(context, listen: false);
+              final habitProvider =
+                  Provider.of<HabitProvider>(context, listen: false);
+
+              final isPremium = authProvider.currentUser?.premium ?? false;
+              final habitCount = habitProvider.habits.length;
+
+              if (!isPremium && habitCount >= 3) {
+                showPremiumLockDialog(context,
+                    'Free plan is limited to 3 habits. Upgrade to Pro for unlimited habits!');
+              } else {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AddHabitScreen()),
+                );
+              }
+            }
           },
           backgroundColor: Colors.transparent,
           elevation: 0,
-          child: const Icon(
-            Icons.add,
+          child: Icon(
+            _currentIndex == 3 ? Icons.note_add : Icons.add,
             color: Colors.white,
             size: 28,
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: MediaQuery.of(context).viewInsets.bottom > 0
+          ? FloatingActionButtonLocation.endFloat
+          : FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [

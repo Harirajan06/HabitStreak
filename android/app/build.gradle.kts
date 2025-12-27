@@ -26,7 +26,7 @@ android {
         applicationId = "com.harirajan.streakly"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 24
         // Ensure targetSdk is at least 35 for Android 13+ notification permission behavior
         targetSdk = 35
         versionCode = flutter.versionCode
@@ -38,6 +38,8 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

@@ -73,10 +73,25 @@ class _HabitsScreenState extends State<HabitsScreen>
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              'Streakly',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+            RichText(
+              text: TextSpan(
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                children: [
+                  TextSpan(
+                    text: 'Habit',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' Sensai',
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

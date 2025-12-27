@@ -9,8 +9,9 @@
     <uses-permission android:name="com.android.vending.BILLING" />
 
     <application
-        android:label="Streakly"
+        android:label="HabitSensai"
         android:name="${applicationName}"
+        android:allowBackup="true"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
@@ -65,7 +66,7 @@
             android:value="2" />
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-9133183118664083~8478062334"/>
+            android:value="ca-app-pub-7032488559595942~2661224214"/>
 
         <!-- Habit Widget provider -->
         <receiver android:name=".widget.HabitWidgetProvider" android:exported="true">

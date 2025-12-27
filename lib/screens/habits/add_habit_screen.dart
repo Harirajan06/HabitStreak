@@ -10,6 +10,7 @@ import '../../widgets/review_dialog.dart';
 // NotificationService and timezone removed — reminders are stored but not scheduled
 import '../../providers/auth_provider.dart'; // Import AuthProvider
 import '../../services/notification_service.dart';
+import '../subscription/subscription_plans_screen.dart'; // Add this import
 
 class AddHabitScreen extends StatefulWidget {
   final Habit? habitToEdit;
@@ -166,9 +167,18 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final habitProvider = Provider.of<HabitProvider>(context, listen: false);
-    final authProvider =
-        Provider.of<AuthProvider>(context, listen: false); // Get AuthProvider
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isPremium = authProvider.currentUser?.premium ?? false;
+    debugPrint(
+        'AddHabitScreen: Checking constraints. Is Premium? $isPremium. Habit count: ${habitProvider.habits.length}');
     final isEditing = widget.habitToEdit != null;
+
+    // RULE: Free users max 3 habits
+    if (!isPremium && !isEditing && habitProvider.habits.length >= 3) {
+      _showPremiumLockDialog(
+          context, "You've reached the free limit of 3 habits.");
+      return;
+    }
     final habitId = widget.habitToEdit?.id ?? _uuid.v4();
     final desiredName = _nameController.text.trim();
 
@@ -227,9 +237,6 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       }
     }
 
-    final isPremium =
-        authProvider.currentUser?.premium ?? false; // Check premium status
-
     if (isEditing) {
       await habitProvider.updateHabit(habit.id, habit);
       // Reschedule or cancel habit reminder after update
@@ -267,6 +274,43 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         Navigator.of(context).pop(true); // Return true to indicate success
       }
     }
+  }
+
+  void _showPremiumLockDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.workspace_premium, color: Color(0xFFFFD700)),
+            SizedBox(width: 8),
+            Text('Premium Required'),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const SubscriptionPlansScreen(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF9B5DE5),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Upgrade to Pro'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showReviewDialog(BuildContext context) {
@@ -667,8 +711,19 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             if (_reminderTimes.length < _remindersPerDay)
               TextButton.icon(
                 onPressed: () async {
-                  // Unfocus any text fields to prevent keyboard from popping up after dialog
+                  // Unfocus any text fields
                   FocusScope.of(context).unfocus();
+
+                  final authProvider =
+                      Provider.of<AuthProvider>(context, listen: false);
+                  final isPremium = authProvider.currentUser?.premium ?? false;
+
+                  // RULE: Free users max 1 reminder
+                  if (!isPremium && _reminderTimes.isNotEmpty) {
+                    _showPremiumLockDialog(context,
+                        "Free users can only add 1 reminder per habit. Upgrade to handle complex schedules!");
+                    return;
+                  }
 
                   final picked = await showTimePicker(
                     context: context,
@@ -679,9 +734,12 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       _reminderTimes.add(picked);
                       _reminderTimes.sort((a, b) => (a.hour * 60 + a.minute)
                           .compareTo(b.hour * 60 + b.minute));
+                      // Update reminders per day if needed to match list size
+                      if (_reminderTimes.length > _remindersPerDay) {
+                        _remindersPerDay = _reminderTimes.length;
+                      }
                     });
 
-                    // Request focus on description after time selection
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (mounted) {
                         _descriptionFocusNode.requestFocus();

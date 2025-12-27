@@ -121,8 +121,10 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
     return Consumer<MoodProvider>(
       builder: (context, moodProvider, _) {
         return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
+            color: theme
+                .colorScheme.surface, // Changed to surface for cleaner look
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: theme.colorScheme.outline.withOpacity(0.15),

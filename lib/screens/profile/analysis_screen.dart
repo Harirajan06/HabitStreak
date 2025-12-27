@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../providers/habit_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../models/habit.dart';
 import '../../screens/subscription/subscription_plans_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -29,6 +31,8 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isPremium =
+        context.watch<AuthProvider>().currentUser?.premium ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -85,22 +89,106 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       ),
       body: Consumer<HabitProvider>(
         builder: (context, habitProvider, child) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildOverviewCards(habitProvider),
-                const SizedBox(height: 24),
-                _buildCompletionChart(habitProvider),
-                const SizedBox(height: 24),
-                _buildStreakCalendar(habitProvider),
-                const SizedBox(height: 24),
-                _buildHabitBreakdown(habitProvider),
-                const SizedBox(height: 24),
-                _buildStreakAnalysis(habitProvider),
-              ],
-            ),
+          final totalHabits = habitProvider.activeHabits.length;
+          final shouldLockScreen = !isPremium && totalHabits >= 3;
+
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                physics: shouldLockScreen
+                    ? const NeverScrollableScrollPhysics()
+                    : const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildOverviewCards(habitProvider),
+                    const SizedBox(height: 24),
+                    _buildCompletionChart(habitProvider),
+                    const SizedBox(height: 24),
+                    _buildStreakCalendar(habitProvider),
+                    const SizedBox(height: 24),
+                    _buildHabitBreakdown(habitProvider),
+                    const SizedBox(height: 24),
+                    _buildStreakAnalysis(habitProvider),
+                  ],
+                ),
+              ),
+              if (shouldLockScreen)
+                Positioned.fill(
+                  child: ClipRRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(
+                        color: theme.scaffoldBackgroundColor.withOpacity(0.3),
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: theme.cardColor,
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.lock,
+                                      size: 48,
+                                      color: theme.colorScheme.primary),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Unlock Full Analysis',
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Analysis is limited to 2 habits for free users.\nUpgrade to see statistics for all habits.',
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.7),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const SubscriptionPlansScreen(),
+                                        ),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 32, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text('Go Premium'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           );
         },
       ),
@@ -341,124 +429,135 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             border: Border.all(
                 color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
           ),
-          child: Row(
+          child: Stack(
             children: [
-              // Fixed Y-Axis Labels
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Row(
                 children: [
-                  Text('100', style: Theme.of(context).textTheme.bodySmall),
-                  Text('80', style: Theme.of(context).textTheme.bodySmall),
-                  Text('60', style: Theme.of(context).textTheme.bodySmall),
-                  Text('40', style: Theme.of(context).textTheme.bodySmall),
-                  Text('20', style: Theme.of(context).textTheme.bodySmall),
-                  Text('0', style: Theme.of(context).textTheme.bodySmall),
-                  const SizedBox(
-                      height: 24), // Bottom Titles padding approximation
-                ],
-              ),
-              const SizedBox(width: 12),
-              // Scrollable Chart
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: chartWidth -
-                        50, // Adjust width to account for fixed axis
-                    child: BarChart(
-                      BarChartData(
-                        maxY: 100,
-                        alignment: BarChartAlignment.spaceAround,
-                        barTouchData: BarTouchData(
-                          enabled: true,
-                          touchTooltipData: BarTouchTooltipData(
-                            tooltipBgColor: Theme.of(context).cardColor,
-                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                              return BarTooltipItem(
-                                '${rod.toY.toInt()}%',
-                                TextStyle(
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        gridData: FlGridData(
-                          show: true,
-                          drawVerticalLine: false,
-                          horizontalInterval: 20,
-                          getDrawingHorizontalLine: (value) {
-                            return FlLine(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .outline
-                                  .withOpacity(0.1),
-                              strokeWidth: 1,
-                            );
-                          },
-                        ),
-                        titlesData: FlTitlesData(
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                                showTitles: false), // Hidden in scroll view
-                          ),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 30,
-                              getTitlesWidget: (value, meta) {
-                                final now = DateTime.now();
-                                DateTime date;
-                                if (_selectedPeriod == 'Week') {
-                                  date = now.subtract(
-                                      Duration(days: 6 - value.toInt()));
-                                } else {
-                                  date = now.subtract(
-                                      Duration(days: 29 - value.toInt()));
-                                }
-
-                                if (_selectedPeriod == 'Week') {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text(
-                                      DateFormat('E').format(date),
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall,
+                  // Fixed Y-Axis Labels
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('100', style: Theme.of(context).textTheme.bodySmall),
+                      Text('80', style: Theme.of(context).textTheme.bodySmall),
+                      Text('60', style: Theme.of(context).textTheme.bodySmall),
+                      Text('40', style: Theme.of(context).textTheme.bodySmall),
+                      Text('20', style: Theme.of(context).textTheme.bodySmall),
+                      Text('0', style: Theme.of(context).textTheme.bodySmall),
+                      const SizedBox(
+                          height: 24), // Bottom Titles padding approximation
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  // Scrollable Chart
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: chartWidth -
+                            50, // Adjust width to account for fixed axis
+                        child: BarChart(
+                          BarChartData(
+                            maxY: 100,
+                            alignment: BarChartAlignment.spaceAround,
+                            barTouchData: BarTouchData(
+                              enabled: true,
+                              touchTooltipData: BarTouchTooltipData(
+                                tooltipBgColor: Theme.of(context).cardColor,
+                                getTooltipItem:
+                                    (group, groupIndex, rod, rodIndex) {
+                                  return BarTooltipItem(
+                                    '${rod.toY.toInt()}%',
+                                    TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   );
-                                } else {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text(
-                                      DateFormat('MMM d').format(date),
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.6),
-                                      ),
-                                    ),
-                                  );
-                                }
+                                },
+                              ),
+                            ),
+                            gridData: FlGridData(
+                              show: true,
+                              drawVerticalLine: false,
+                              horizontalInterval: 20,
+                              getDrawingHorizontalLine: (value) {
+                                return FlLine(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .outline
+                                      .withOpacity(0.1),
+                                  strokeWidth: 1,
+                                );
                               },
                             ),
+                            titlesData: FlTitlesData(
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                    showTitles: false), // Hidden in scroll view
+                              ),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 30,
+                                  getTitlesWidget: (value, meta) {
+                                    final now = DateTime.now();
+                                    DateTime date;
+                                    if (_selectedPeriod == 'Week') {
+                                      date = now.subtract(
+                                          Duration(days: 6 - value.toInt()));
+                                    } else {
+                                      date = now.subtract(
+                                          Duration(days: 29 - value.toInt()));
+                                    }
+
+                                    if (_selectedPeriod == 'Week') {
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 8.0),
+                                        child: Text(
+                                          DateFormat('E').format(date),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall,
+                                        ),
+                                      );
+                                    } else {
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 8.0),
+                                        child: Text(
+                                          DateFormat('MMM d').format(date),
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withOpacity(0.6),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
+                              rightTitles: AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false)),
+                              topTitles: AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false)),
+                            ),
+                            borderData: FlBorderData(show: false),
+                            barGroups: _generateBarGroups(habitProvider),
                           ),
-                          rightTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
-                          topTitles: AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
                         ),
-                        borderData: FlBorderData(show: false),
-                        barGroups: _generateBarGroups(habitProvider),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
+              // Removed the local blur overlay logic
             ],
           ),
         ),

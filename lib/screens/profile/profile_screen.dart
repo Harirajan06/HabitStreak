@@ -1,11 +1,12 @@
 import 'dart:io';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart'; // This is still needed for sharing
-import 'package:url_launcher/url_launcher.dart';
+
 import '../../providers/auth_provider.dart';
 import '../../providers/habit_provider.dart';
 import '../../providers/note_provider.dart';
@@ -17,8 +18,10 @@ import '../main_navigation_screen.dart';
 import '../auth/splash_screen.dart';
 
 import '../subscription/subscription_plans_screen.dart';
+import '../../widgets/premium_lock_dialog.dart';
 import '../../widgets/hero_stats_card.dart';
-import 'support_dialog.dart';
+
+import '../../services/purchase_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -73,6 +76,8 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           children: [
             _buildHeroStatsCard(context),
+            const SizedBox(height: 20),
+            _buildSubscriptionStatusCard(context),
             const SizedBox(height: 20),
             _buildMenuSection(context),
           ],
@@ -134,6 +139,103 @@ class ProfileScreen extends StatelessWidget {
 
     if (totalPossibleCompletions == 0) return 0;
     return ((actualCompletions / totalPossibleCompletions) * 100).round();
+  }
+
+  Widget _buildSubscriptionStatusCard(BuildContext context) {
+    return Consumer2<AuthProvider, HabitProvider>(
+      builder: (context, authProvider, habitProvider, child) {
+        final isPremium = authProvider.currentUser?.premium ?? false;
+        final habitCount = habitProvider.habits.length;
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isPremium
+                ? const Color(0xFFFFD700).withOpacity(0.15)
+                : (isDark ? Colors.grey[850] : Colors.white),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isPremium
+                  ? const Color(0xFFFFD700)
+                  : theme.colorScheme.outline.withOpacity(0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isPremium
+                      ? const Color(0xFFFFD700).withOpacity(0.2)
+                      : theme.colorScheme.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isPremium ? Icons.star : Icons.person_outline,
+                  color: isPremium
+                      ? const Color(0xFFFFD700) // Gold
+                      : theme.colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isPremium ? 'Premium Plan' : 'Free Plan',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    if (!isPremium)
+                      Text(
+                        '$habitCount / 3 Habits Used',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: habitCount >= 3
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      )
+                    else
+                      Text(
+                        'Unlimited Access',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (!isPremium)
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const SubscriptionPlansScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text('Upgrade'),
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildNewStatsSection(BuildContext context) {
@@ -289,6 +391,22 @@ class ProfileScreen extends StatelessWidget {
         _buildMenuCard(
           context,
           [
+            _buildMenuItem(
+              context,
+              title: 'Manage Subscription',
+              subtitle: 'View plans & billing',
+              icon: Icons.workspace_premium,
+              iconColor: const Color(0xFFFFD700),
+              onTap: () {
+                PurchaseService.instance.showCustomerCenter();
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildMenuCard(
+          context,
+          [
             Consumer<ThemeProvider>(
               builder: (context, themeProvider, child) {
                 return _buildMenuItem(
@@ -361,7 +479,7 @@ class ProfileScreen extends StatelessWidget {
             _buildMenuItem(
               context,
               title: 'Share App',
-              subtitle: 'Invite friends to join Streakly',
+              subtitle: 'Invite friends to join HabitSensai',
               icon: Icons.share, // Changed icon
               iconColor: Colors.lightGreen,
               onTap: () {
@@ -393,7 +511,7 @@ class ProfileScreen extends StatelessWidget {
             _buildMenuItem(
               context,
               title: 'About',
-              subtitle: 'Learn more about Streakly',
+              subtitle: 'Learn more about HabitSensai',
               icon: Icons.info_outline,
               iconColor: Colors.tealAccent,
               onTap: () {
@@ -446,6 +564,24 @@ class ProfileScreen extends StatelessWidget {
               iconColor: Colors.redAccent,
               onTap: () {
                 _showSignOutDialog(context);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Developer Tools (Only visible in debug mode or for manual testing)
+        // Ideally checking kDebugMode, but for now we leave it visible for the user to test
+        _buildMenuCard(
+          context,
+          [
+            _buildMenuItem(
+              context,
+              title: 'Developer Tools',
+              subtitle: 'Debug & Test Features',
+              icon: Icons.developer_mode,
+              iconColor: Colors.blueGrey,
+              onTap: () {
+                _showDeveloperOptions(context);
               },
             ),
           ],
@@ -544,7 +680,7 @@ class ProfileScreen extends StatelessWidget {
           children: [
             Icon(Icons.share, color: Colors.lightGreen),
             const SizedBox(width: 8),
-            const Text('Share Streakly'),
+            const Text('Share HabitSensai'),
           ],
         ),
         content: Column(
@@ -555,7 +691,7 @@ class ProfileScreen extends StatelessWidget {
                 color: Color(0xFF9B5DE5), size: 40),
             const SizedBox(height: 16),
             Text(
-              'Enjoying Streakly? Share it with your friends and help them build great habits too!',
+              'Enjoying HabitSensai? Share it with your friends and help them build great habits too!',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color:
@@ -579,7 +715,7 @@ class ProfileScreen extends StatelessWidget {
                     'https://play.google.com/store/apps/details?id=$appPackageName';
 
                 final shareText =
-                    'Check out Streakly, a great app for building habits! You can download it here: $appLink';
+                    'Check out HabitSensai, a great app for building habits! You can download it here: $appLink';
                 Share.share(shareText);
               },
               style: FilledButton.styleFrom(
@@ -918,11 +1054,21 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _showSupportDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const SupportDialog(),
-    );
+  Future<void> _showSupportDialog(BuildContext context) async {
+    const url = 'https://habitsensai.com/support'; // Placeholder URL
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(
+        uri,
+        mode: LaunchMode.inAppBrowserView, // Modern, seamless UI
+      );
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch $url')),
+        );
+      }
+    }
   }
 
   void _showSignOutDialog(BuildContext context) {
@@ -1073,6 +1219,17 @@ class ProfileScreen extends StatelessWidget {
   Future<void> _handleExportShare(
       BuildContext context, BuildContext sheetContext) async {
     Navigator.of(sheetContext).pop();
+
+    // Check Premium Status
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isPremium = authProvider.currentUser?.premium ?? false;
+
+    if (!isPremium) {
+      showPremiumLockDialog(context,
+          "Cloud backup is a Pro feature. Upgrade to secure your data!");
+      return;
+    }
+
     final messenger = ScaffoldMessenger.of(context);
     try {
       await ExportImportService.instance.shareExport();
@@ -1093,6 +1250,17 @@ class ProfileScreen extends StatelessWidget {
   Future<void> _handleExportSave(
       BuildContext context, BuildContext sheetContext) async {
     Navigator.of(sheetContext).pop();
+
+    // Check Premium Status
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isPremium = authProvider.currentUser?.premium ?? false;
+
+    if (!isPremium) {
+      showPremiumLockDialog(context,
+          "Exporting data is a Pro feature. Back up your habits today!");
+      return;
+    }
+
     final messenger = ScaffoldMessenger.of(context);
     try {
       final file = await ExportImportService.instance.exportToFile();
@@ -1317,6 +1485,58 @@ class ProfileScreen extends StatelessWidget {
     }
 
     return totalScore;
+  }
+
+  void _showDeveloperOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Consumer<AuthProvider>(
+          builder: (context, authProvider, child) {
+            final isPremium = authProvider.currentUser?.premium ?? false;
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Developer Options',
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 20),
+                    SwitchListTile(
+                      title: const Text('Mock Premium Status'),
+                      subtitle: const Text('Toggle to test Pro features'),
+                      value: isPremium,
+                      activeColor: const Color(0xFFFFD700),
+                      onChanged: (value) {
+                        authProvider.setPremiumStatus(value);
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading:
+                          const Icon(Icons.delete_forever, color: Colors.red),
+                      title: const Text('Clear All Data'),
+                      subtitle: const Text('Reset habits and history'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Not implemented yet')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   int _calculateCompletionScore(HabitProvider habitProvider) {

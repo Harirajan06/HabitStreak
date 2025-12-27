@@ -54,10 +54,25 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              'Streakly',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+            RichText(
+              text: TextSpan(
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                children: [
+                  TextSpan(
+                    text: 'Habit',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' Sensai',
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -636,7 +651,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant,
+                color: theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: theme.colorScheme.outline.withOpacity(0.3),

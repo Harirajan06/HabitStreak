@@ -19,6 +19,15 @@ class MainActivity: FlutterActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        android.util.Log.d("StreaklyNative", "MainActivity onNewIntent called: ${intent.action}")
+        if (intent.hasExtra("WIDGET_CONFIG_MODE")) {
+             android.util.Log.d("StreaklyNative", "onNewIntent has WIDGET_CONFIG_MODE")
+        }
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         android.util.Log.d("StreaklyNative", "Configuring Flutter Engine with Channel: $CHANNEL")
         super.configureFlutterEngine(flutterEngine)

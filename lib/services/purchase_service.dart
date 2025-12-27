@@ -1,109 +1,146 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:hive/hive.dart';
+import 'package:flutter/services.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
+import '../services/hive_service.dart';
 
 class PurchaseService {
+  // ... (existing code)
+
+  Future<void> showPaywall() async {
+    try {
+      final paywallResult =
+          await RevenueCatUI.presentPaywallIfNeeded(_entitlementId);
+      debugPrint('Paywall result: $paywallResult');
+    } catch (e) {
+      debugPrint('Error showing paywall: $e');
+    }
+  }
+
+  Future<void> showCustomerCenter() async {
+    try {
+      await RevenueCatUI.presentCustomerCenter();
+    } catch (e) {
+      debugPrint('Error showing customer center: $e');
+    }
+  }
+
+  // ... (rest of class)
   PurchaseService._privateConstructor();
   static final PurchaseService instance = PurchaseService._privateConstructor();
 
-  final InAppPurchase _iap = InAppPurchase.instance;
-  StreamSubscription<List<PurchaseDetails>>? _subscription;
-  
-  // Stream controller for purchase status updates
+  // STREAM CONTROLLERS
   final _statusController = StreamController<String>.broadcast();
   Stream<String> get statusStream => _statusController.stream;
 
-  // Use your product ids defined in App Store / Play Console
-  final List<String> productIds = <String>[
-    'premium_monthly',
-    'premium_yearly',
-    'premium_lifetime',
-  ];
+  final _subscriptionStatusController = StreamController<bool>.broadcast();
+  Stream<bool> get subscriptionStatusStream =>
+      _subscriptionStatusController.stream;
 
-  Future<bool> get isAvailable => _iap.isAvailable();
+  // CONFIGURATION
+  static const _apiKey = 'test_UJOGBiKtFpwTBReIuyUejnhRbog';
+  static const _entitlementId = 'Habit Sensai Pro';
+
+  bool _isInitialized = false;
 
   Future<void> init() async {
-    final Stream<List<PurchaseDetails>> purchaseUpdated = _iap.purchaseStream;
-    _subscription = purchaseUpdated.listen(_listenToPurchaseUpdated, onDone: () {
-      _subscription?.cancel();
-    }, onError: (error) {
-      debugPrint('Purchase stream error: $error');
+    if (_isInitialized) return;
+
+    await Purchases.setLogLevel(LogLevel.debug);
+
+    PurchasesConfiguration configuration = PurchasesConfiguration(_apiKey);
+
+    await Purchases.configure(configuration);
+    _isInitialized = true;
+
+    // Log User ID for debugging
+    final appUserId = await Purchases.appUserID;
+    debugPrint('RevenueCat App User ID: $appUserId');
+
+    await _checkSubscriptionStatus();
+
+    // Listen to customer info updates
+    Purchases.addCustomerInfoUpdateListener((customerInfo) {
+      _updatePremiumStatus(customerInfo);
     });
   }
 
-  Future<List<ProductDetails>> queryProducts() async {
-    final ProductDetailsResponse response =
-        await _iap.queryProductDetails(productIds.toSet());
-    if (response.error != null) {
-      debugPrint('Product query error: ${response.error}');
+  Future<Offerings?> getOfferings() async {
+    try {
+      final offerings = await Purchases.getOfferings();
+      return offerings;
+    } on PlatformException catch (e) {
+      debugPrint('Error fetching offerings: $e');
+      return null;
     }
-    return response.productDetails;
   }
 
-  Future<void> buyProduct(ProductDetails product) async {
-    final PurchaseParam purchaseParam = PurchaseParam(productDetails: product);
-    await _iap.buyNonConsumable(purchaseParam: purchaseParam);
+  Future<void> purchasePackage(Package package) async {
+    try {
+      _statusController.add('pending');
+      final customerInfo = await Purchases.purchasePackage(package);
+      _updatePremiumStatus(customerInfo);
+
+      if (customerInfo.entitlements.all[_entitlementId]?.isActive ?? false) {
+        _statusController.add('success');
+      } else {
+        // Purchase successful but no entitlement (rare)
+        _statusController
+            .add('error: Purchase completed but premium not active');
+      }
+    } on PlatformException catch (e) {
+      var errorCode = PurchasesErrorHelper.getErrorCode(e);
+      if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
+        _statusController.add('canceled');
+      } else {
+        _statusController.add('error: ${e.message}');
+      }
+    } catch (e) {
+      _statusController.add('error: $e');
+    }
   }
 
   Future<void> restorePurchases() async {
-    await _iap.restorePurchases();
-  }
-
-  void _listenToPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
-    for (final PurchaseDetails purchaseDetails in purchaseDetailsList) {
-      switch (purchaseDetails.status) {
-        case PurchaseStatus.pending:
-          debugPrint('Purchase pending: ${purchaseDetails.productID}');
-          _statusController.add('pending');
-          break;
-        case PurchaseStatus.purchased:
-        case PurchaseStatus.restored:
-          _verifyAndDeliverPurchase(purchaseDetails);
-          break;
-        case PurchaseStatus.error:
-          debugPrint('Purchase error: ${purchaseDetails.error}');
-          _statusController.add('error: ${purchaseDetails.error?.message ?? "Unknown error"}');
-          break;
-        case PurchaseStatus.canceled:
-          debugPrint('Purchase canceled');
-          _statusController.add('canceled');
-          break;
-      }
-      if (purchaseDetails.pendingCompletePurchase) {
-        _iap.completePurchase(purchaseDetails);
-      }
-    }
-  }
-
-  Future<void> _verifyAndDeliverPurchase(PurchaseDetails purchase) async {
-    // NOTE: This is a local-only verification. For production, validate receipts on a server.
     try {
-      final Box settings = Hive.box('settings_box');
-      // Mark premium unlocked locally
-      settings.put('isPremium', true);
+      _statusController.add('pending');
+      final customerInfo = await Purchases.restorePurchases();
+      _updatePremiumStatus(customerInfo);
 
-      // Optionally store purchase record
-      if (Hive.isBoxOpen('purchases_box')) {
-        final Box purchasesBox = Hive.box('purchases_box');
-        purchasesBox.put(purchase.purchaseID ?? DateTime.now().toIso8601String(), {
-          'productId': purchase.productID,
-          'transactionDate': purchase.transactionDate,
-          'status': purchase.status.toString(),
-          'remark': 'local-only validated',
-        });
+      // Check if anything was actually restored
+      if (customerInfo.entitlements.active.isNotEmpty) {
+        _statusController.add('success');
+      } else {
+        _statusController.add('error: No purchases to restore');
       }
-      debugPrint('Delivered purchase ${purchase.productID} — premium enabled locally.');
-      _statusController.add('success');
-    } catch (e) {
-      debugPrint('Error delivering purchase: $e');
-      _statusController.add('error: Failed to deliver purchase');
+    } on PlatformException catch (e) {
+      _statusController.add('error: ${e.message}');
     }
   }
 
-  void dispose() {
-    _subscription?.cancel();
-    _subscription = null;
-    _statusController.close();
+  Future<void> _checkSubscriptionStatus() async {
+    if (!_isInitialized) return;
+    try {
+      CustomerInfo customerInfo = await Purchases.getCustomerInfo();
+      _updatePremiumStatus(customerInfo);
+    } catch (e) {
+      debugPrint('Error checking subscription status: $e');
+    }
+  }
+
+  Future<void> _updatePremiumStatus(CustomerInfo customerInfo) async {
+    final bool isPremium =
+        customerInfo.entitlements.all[_entitlementId]?.isActive ?? false;
+
+    debugPrint(
+        'Updating Premium Status (EncTitl: $_entitlementId): $isPremium');
+
+    final settings = HiveService.instance.getSettings();
+    settings['isPremium'] = isPremium;
+    await HiveService.instance.setSettings(settings);
+
+    // Notify listeners via stream
+    _subscriptionStatusController.add(isPremium);
   }
 }
