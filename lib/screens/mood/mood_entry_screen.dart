@@ -176,18 +176,19 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                   Center(
                     child: Text(
                       '${widget.selectedDate.day.toString().padLeft(2, '0')}/${widget.selectedDate.month.toString().padLeft(2, '0')}/${widget.selectedDate.year}',
-                      style: theme.textTheme.bodyLarge?.copyWith(
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        fontSize: 14,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   _buildMoodGrid(theme),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
                   _buildTagsSection(theme),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   _buildNotesSection(theme),
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -204,9 +205,9 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        childAspectRatio: 0.8, // Adjusted to prevent overflow
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+        childAspectRatio: 0.9, // Make items slightly shorter
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
       ),
       itemCount: _moods.length,
       itemBuilder: (context, index) {
@@ -224,9 +225,8 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
           },
           child: Container(
             decoration: BoxDecoration(
-              color: isSelected
-                  ? (mood['color'] as Color).withOpacity(0.3)
-                  : theme.colorScheme.surfaceContainerHighest,
+              color:
+                  (mood['color'] as Color).withOpacity(isSelected ? 0.3 : 0.1),
               borderRadius: BorderRadius.circular(16),
               border: isSelected
                   ? Border.all(
@@ -238,22 +238,16 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10), // Reduced padding
-                  decoration: BoxDecoration(
-                    color: (mood['color'] as Color).withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    mood['emoji'] as String,
-                    style: const TextStyle(fontSize: 32),
-                  ),
+                Text(
+                  mood['emoji'] as String,
+                  style: const TextStyle(fontSize: 26),
                 ),
-                const SizedBox(height: 4), // Reduced spacing
+                const SizedBox(height: 2), // Reduced spacing
                 Text(
                   mood['label'] as String,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface,
+                    fontSize: 11,
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -278,6 +272,16 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
     // I shall fix it to 'ease' in the map definition if I could, but here I just use the map.
 
     if (currentTags.isEmpty) return const SizedBox.shrink();
+
+    // Find the color of the selected mood
+    Color moodColor = const Color(0xFF9B5DE5); // Default
+    if (_selectedMood != null) {
+      final moodData = _moods.firstWhere(
+        (m) => m['label'] == _selectedMood,
+        orElse: () => {'color': const Color(0xFF9B5DE5)},
+      );
+      moodColor = moodData['color'] as Color;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,14 +310,14 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
               },
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? const Color(0xFF9B5DE5).withOpacity(0.2)
+                      ? moodColor.withOpacity(0.2)
                       : theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(20),
                   border: isSelected
-                      ? Border.all(color: const Color(0xFF9B5DE5), width: 1.5)
+                      ? Border.all(color: moodColor, width: 1.5)
                       : Border.all(
                           color: theme.colorScheme.outline.withOpacity(0.2),
                         ),
@@ -321,9 +325,8 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
                 child: Text(
                   tag,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isSelected
-                        ? const Color(0xFF9B5DE5)
-                        : theme.colorScheme.onSurface,
+                    color: isSelected ? moodColor : theme.colorScheme.onSurface,
+                    fontSize: 12,
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -350,22 +353,25 @@ class _MoodEntryScreenState extends State<MoodEntryScreen> {
         Container(
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: theme.colorScheme.outline.withOpacity(0.2),
             ),
           ),
-          child: TextField(
-            controller: _notesController,
-            maxLines: 6,
-            style: theme.textTheme.bodyMedium,
-            decoration: InputDecoration(
-              hintText: 'Write about your day...',
-              hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.4),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: TextField(
+              controller: _notesController,
+              maxLines: 3,
+              style: theme.textTheme.bodyMedium,
+              decoration: InputDecoration(
+                hintText: 'Write about your day...',
+                hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.all(16),
               ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(16),
             ),
           ),
         ),

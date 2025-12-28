@@ -368,17 +368,18 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Habit Information',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            'Habit Name',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         _buildModernTextField(
           controller: _nameController,
-          label: 'Habit Name',
           hint: 'e.g., Drink Water',
           icon: Icons.edit_outlined,
           validator: (value) {
@@ -388,14 +389,23 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             return null;
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            'Description',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+        ),
+        const SizedBox(height: 12),
         _buildModernTextField(
           controller: _descriptionController,
           focusNode: _descriptionFocusNode,
-          label: 'Description (Optional)',
           hint: 'Why do you want to build this habit?',
           icon: Icons.notes_outlined,
-          maxLines: 3,
+          maxLines: 2,
           validator: (value) => null,
         ),
       ],
@@ -410,7 +420,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Text(
             'Icon',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
           ),
@@ -418,10 +428,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         const SizedBox(height: 12),
         Container(
           width: double.infinity,
-          constraints: const BoxConstraints(maxHeight: 260),
+          height: 220, // Fixed height for horizontal scroll
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
             ),
@@ -434,15 +444,15 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(12),
             child: GridView.builder(
-              padding: const EdgeInsets.all(20),
-              shrinkWrap: true,
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 60,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+              scrollDirection: Axis.horizontal,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
                 childAspectRatio: 1,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
               ),
               itemCount: _availableIcons.length,
               itemBuilder: (context, index) {
@@ -461,7 +471,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       color: isSelected
                           ? Theme.of(context).colorScheme.primary
                           : Colors.transparent,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(8),
                       border: isSelected
                           ? null
                           : Border.all(
@@ -474,7 +484,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     ),
                     child: Icon(
                       icon,
-                      size: 24,
+                      size: 20,
                       color: isSelected
                           ? Theme.of(context).colorScheme.onPrimary
                           : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -497,7 +507,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Text(
             'Color',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
           ),
@@ -505,10 +515,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         const SizedBox(height: 12),
         Container(
           width: double.infinity,
-          constraints: const BoxConstraints(maxHeight: 200),
+          height: 220, // Fixed height for horizontal scroll
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
             ),
@@ -521,15 +531,15 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(12),
             child: GridView.builder(
-              padding: const EdgeInsets.all(20),
-              shrinkWrap: true,
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+              scrollDirection: Axis.horizontal,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
                 childAspectRatio: 1,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
               ),
               itemCount: _availableColors.length,
               itemBuilder: (context, index) {
@@ -546,7 +556,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     duration: const Duration(milliseconds: 200),
                     decoration: BoxDecoration(
                       color: color,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(8),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
@@ -567,7 +577,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                         ? const Icon(
                             Icons.check,
                             color: Colors.white,
-                            size: 20,
+                            size: 16,
                           )
                         : null,
                   ),
@@ -586,7 +596,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       children: [
         Text(
           'Habit Type',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
         ),
@@ -614,7 +624,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       color: isSelected
                           ? color.withOpacity(0.15)
                           : Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
                             ? color
@@ -653,7 +663,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                                 : Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant,
-                            size: 28,
+                            size: 24,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -704,7 +714,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           children: [
             Text(
               'Reminders',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             ),
@@ -762,7 +772,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   .colorScheme
                   .surfaceContainerHighest
                   .withOpacity(0.3),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
               ),
@@ -771,7 +781,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               children: [
                 Icon(
                   Icons.notifications_off_outlined,
-                  size: 48,
+                  size: 32,
                   color: Theme.of(context).colorScheme.outline,
                 ),
                 const SizedBox(height: 12),
@@ -1002,7 +1012,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
   Widget _buildModernTextField({
     required TextEditingController controller,
-    required String label,
+    String? label,
     required String hint,
     IconData? icon,
     int maxLines = 1,
@@ -1014,7 +1024,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: theme.colorScheme.outline.withOpacity(0.1),
         ),
@@ -1036,7 +1046,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           ),
           hintText: hint,
           hintStyle: TextStyle(
-            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+            fontSize: 14,
           ),
           prefixIcon: icon != null
               ? Icon(

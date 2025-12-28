@@ -14,7 +14,7 @@ class HabitNoteIconButton extends StatelessWidget {
   const HabitNoteIconButton({
     super.key,
     required this.habit,
-    this.size = 32,
+    this.size = 36,
     this.isSquare = false,
   });
 
@@ -22,7 +22,7 @@ class HabitNoteIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final borderColor = habit.color;
+    // final borderColor = habit.color; // Removed unused variable
 
     return GestureDetector(
       onTap: () => _showAddNoteDialog(context),
@@ -34,12 +34,11 @@ class HabitNoteIconButton extends StatelessWidget {
           decoration: BoxDecoration(
             shape: isSquare ? BoxShape.rectangle : BoxShape.circle,
             borderRadius: isSquare ? BorderRadius.circular(8) : null,
-            color: isSquare ? habit.color.withOpacity(0.1) : null,
-            border: isSquare ? null : Border.all(color: borderColor, width: 2),
+            color: habit.color, // Filled color
           ),
           child: Icon(
             Icons.sticky_note_2_outlined,
-            color: borderColor,
+            color: Colors.white, // White icon
             size: isSquare ? 24 : size * 0.6,
           ),
         ),

@@ -151,7 +151,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                         children: [
                           TextSpan(
-                            text: 'Habit',
+                            text: 'Habit ',
                             style: TextStyle(
                               color: theme.colorScheme.onSurface,
                             ),

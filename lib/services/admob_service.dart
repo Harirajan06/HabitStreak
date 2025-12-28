@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../main.dart'; // Import to access scaffoldMessengerKey
 
@@ -52,15 +51,15 @@ class AdmobService {
           debugPrint("AdmobService: Interstitial ad failed to load: $err");
           _interstitialAd = null;
           // DEBUG: Show error to user
-          scaffoldMessengerKey.currentState?.showSnackBar(
-            SnackBar(
-              content: Text('Ad Failed: Code ${err.code} - ${err.message}'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating, // Prevent pushing FAB
-              margin: const EdgeInsets.all(16),
-              duration: const Duration(seconds: 4),
-            ),
-          );
+          // scaffoldMessengerKey.currentState?.showSnackBar(
+          //   SnackBar(
+          //     content: Text('Ad Failed: Code ${err.code} - ${err.message}'),
+          //     backgroundColor: Colors.red,
+          //     behavior: SnackBarBehavior.floating, // Prevent pushing FAB
+          //     margin: const EdgeInsets.all(16),
+          //     duration: const Duration(seconds: 4),
+          //   ),
+          // );
         },
       ),
     );
@@ -93,14 +92,13 @@ class AdmobService {
     } else {
       debugPrint("AdmobService: Interstitial ad not ready.");
       // DEBUG: Notify user
-      scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(
-          content: Text('Ad not ready yet. Reloading...'),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating, // Prevent pushing FAB
-          margin: EdgeInsets.all(16),
-        ),
-      );
+      // scaffoldMessengerKey.currentState?.showSnackBar(
+      //   const SnackBar(
+      //     content: Text('Ad not ready yet. Please try again later.'),
+      //     duration: Duration(seconds: 2),
+      //     behavior: SnackBarBehavior.floating, // Prevent pushing FAB
+      //   ),
+      // );
       loadInterstitialAd(); // Load an ad to be ready for the next time.
     }
   }

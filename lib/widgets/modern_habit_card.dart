@@ -162,16 +162,16 @@ class ModernHabitCard extends StatelessWidget {
       children: [
         // Habit Icon
         Container(
-          width: 40,
-          height: 40,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
             color: habit.color.withAlpha((0.2 * 255).round()),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             habit.icon,
             color: habit.color,
-            size: 20,
+            size: 24,
           ),
         ),
         const SizedBox(width: 12),
@@ -234,8 +234,8 @@ class ModernHabitCard extends StatelessWidget {
                     },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 28,
-                height: 28,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   color: isFullyCompleted
                       ? Colors.green
@@ -250,13 +250,13 @@ class ModernHabitCard extends StatelessWidget {
                             : Colors.white.withAlpha((0.3 * 255).round()),
                     width: 2,
                   ),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: isCompleted
                     ? Icon(
                         isFullyCompleted ? Icons.check : Icons.check,
                         color: Colors.white,
-                        size: 16,
+                        size: 20,
                       )
                     : null,
               ),

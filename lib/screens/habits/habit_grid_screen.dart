@@ -237,7 +237,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
 
   Widget _buildHabitCard(Habit habit, ThemeData theme) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10), // Reduced margin
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -245,7 +245,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
           onTap: () => HabitDetailScreen.show(context, habit),
           onLongPress: () => _showHabitOptionsMenu(habit),
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10), // Reduced padding
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
@@ -270,8 +270,8 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                       child: Row(
                         children: [
                           Container(
-                            width: 44,
-                            height: 44,
+                            width: 38, // Reduced size
+                            height: 38, // Reduced size
                             decoration: BoxDecoration(
                               color: Color.lerp(habit.color, Colors.grey, 0.3)!
                                   .withOpacity(0.15),
@@ -280,7 +280,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                             child: Icon(
                               habit.icon,
                               color: Color.lerp(habit.color, Colors.grey, 0.3),
-                              size: 24,
+                              size: 20, // Reduced icon size
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -318,7 +318,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                                       child: const Icon(
                                         Icons.local_fire_department,
                                         color: Colors.white,
-                                        size: 16,
+                                        size: 14, // Reduced size
                                       ),
                                     ),
                                     const SizedBox(width: 4),
@@ -328,6 +328,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                                           theme.textTheme.bodySmall?.copyWith(
                                         color: theme.colorScheme.onSurface,
                                         fontWeight: FontWeight.w600,
+                                        fontSize: 11, // Slightly smaller text
                                       ),
                                     ),
                                   ],
@@ -344,15 +345,19 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                       mainAxisSize: MainAxisSize.min, // Keep buttons tight
                       children: [
                         HabitNoteIconButton(
-                            habit: habit, size: 44, isSquare: true),
+                            habit: habit,
+                            size: 38,
+                            isSquare: true), // Reduced size
                         const SizedBox(width: 6),
                         MultiCompletionButton(
-                            habit: habit, size: 44, isSquare: true),
+                            habit: habit,
+                            size: 38,
+                            isSquare: true), // Reduced size
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8), // Reduced spacing
                 _buildYearGrid(habit, theme),
               ],
             ),

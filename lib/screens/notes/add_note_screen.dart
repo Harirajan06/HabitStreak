@@ -144,7 +144,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
 
               // Habit Selection
               _buildSectionCard(
-                title: 'Related Habit (Optional)',
+                title: 'Related Habit',
                 child: Consumer<HabitProvider>(
                   builder: (context, habitProvider, child) {
                     final habits = habitProvider.activeHabits;
@@ -155,30 +155,32 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                         hintText: 'Select a habit...',
                         border: InputBorder.none,
                       ),
-                      items: [
-                        const DropdownMenuItem<String?>(
-                          value: null,
-                          child: Text('No habit selected'),
-                        ),
-                        ...habits.map((habit) => DropdownMenuItem<String?>(
-                              value: habit.id,
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 12,
-                                    backgroundColor: habit.color,
-                                    child: Icon(
-                                      habit.icon,
-                                      size: 14,
-                                      color: Colors.white,
+                      items: habits
+                          .map((habit) => DropdownMenuItem<String?>(
+                                value: habit.id,
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 12,
+                                      backgroundColor: habit.color,
+                                      child: Icon(
+                                        habit.icon,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(habit.name),
-                                ],
-                              ),
-                            )),
-                      ],
+                                    const SizedBox(width: 8),
+                                    Text(habit.name),
+                                  ],
+                                ),
+                              ))
+                          .toList(),
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Please select a habit';
+                        }
+                        return null;
+                      },
                       onChanged: (value) {
                         setState(() {
                           _selectedHabitId = value;
@@ -230,6 +232,9 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   label: Text(
                       widget.noteToEdit != null ? 'Update Note' : 'Save Note'),
                   style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFF9B5DE5), // Purple background
+                    foregroundColor: Colors.white, // White text/icon
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

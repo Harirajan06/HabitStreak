@@ -397,161 +397,201 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       }
     }
 
-    final Color accentColor = isMoodNote
-        ? (moodColor ?? const Color(0xFF9B5DE5))
-        : (habit?.color ?? theme.colorScheme.primary);
+    final Color accentColor = dateLabel.isNotEmpty
+        ? theme.colorScheme.primary
+        : (isMoodNote
+            ? (moodColor ?? const Color(0xFF9B5DE5))
+            : (habit?.color ?? theme.colorScheme.primary));
 
     final Color cardBgColor = theme.cardColor;
     final Color headerBgColor = accentColor.withOpacity(0.15);
     final Color cardBorderColor = theme.colorScheme.outline.withOpacity(0.1);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBgColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header Section
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: headerBgColor,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+    return GestureDetector(
+      onLongPress: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete Note'),
+            content: const Text('Are you sure you want to delete this note?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: theme.colorScheme.onSurface),
+                ),
               ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  final noteProvider =
+                      Provider.of<NoteProvider>(context, listen: false);
+                  await noteProvider.deleteNote(note.id);
+                  if (context.mounted) {
+                    await _refreshNotes();
+                  }
+                },
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBgColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorderColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Row(
-              children: [
-                if (note.habitId != null && habit != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: habit.color.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header Section
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: headerBgColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              child: Row(
+                children: [
+                  if (note.habitId != null && habit != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: habit.color.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(
+                        habit.icon,
+                        size: 14,
+                        color: habit.color,
+                      ),
                     ),
-                    child: Icon(
-                      habit.icon,
-                      size: 14,
-                      color: habit.color,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        habit.name,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: habit.color.withOpacity(0.9),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      habit.name,
+                    const SizedBox(width: 8),
+                    // Date for Habit
+                    if (dateLabel.isNotEmpty)
+                      Text(
+                        dateLabel,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: habit.color.withOpacity(0.7),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ] else if (isMoodNote) ...[
+                    // Date Label (Replacing 'Mood')
+                    Text(
+                      dateLabel,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: habit.color.withOpacity(0.9),
+                        color: accentColor.withOpacity(0.9),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Date for Habit
-                  if (dateLabel.isNotEmpty)
+                    const Spacer(),
+                    // Emoji (Replacing Icon)
+                    if (moodEmoji.isNotEmpty)
+                      Text(
+                        moodEmoji,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                  ],
+                ],
+              ),
+            ),
+
+            // Body Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (note.title.isNotEmpty && !isMoodNote)
                     Text(
-                      dateLabel,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: habit.color.withOpacity(0.7),
-                        fontWeight: FontWeight.w500,
+                      note.title,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                        fontSize: 14, // Reduced from titleMedium/15
                       ),
                     ),
-                ] else if (isMoodNote) ...[
-                  // Date Label (Replacing 'Mood')
-                  Text(
-                    dateLabel,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: accentColor.withOpacity(0.9),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  // Emoji (Replacing Icon)
-                  if (moodEmoji.isNotEmpty)
+                  if (isMoodNote)
                     Text(
-                      moodEmoji,
-                      style: const TextStyle(fontSize: 16),
+                      note.content.isNotEmpty
+                          ? note.content
+                          : (note.title.split(' ').length > 1
+                              ? note.title.split(' ')[1]
+                              : ''),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontSize: 13, // Reduced from bodyMedium
+                      ),
                     ),
-                ],
-              ],
-            ),
-          ),
-
-          // Body Section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (note.title.isNotEmpty && !isMoodNote)
-                  Text(
-                    note.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                      fontSize: 15,
+                  if (!isMoodNote && note.title.isNotEmpty)
+                    const SizedBox(height: 2), // Reduced spacing
+                  if (!isMoodNote)
+                    Text(
+                      note.content,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        height: 1.3,
+                        fontSize: 13, // Reduced from bodyMedium
+                      ),
                     ),
-                  ),
-                if (isMoodNote)
-                  Text(
-                    note.content.isNotEmpty
-                        ? note.content
-                        : (note.title.split(' ').length > 1
-                            ? note.title.split(' ')[1]
-                            : ''),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                if (!isMoodNote && note.title.isNotEmpty)
-                  const SizedBox(height: 4),
-                if (!isMoodNote)
-                  Text(
-                    note.content,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      height: 1.3,
-                    ),
-                  ),
-                if (note.tags.isNotEmpty && !isMoodNote) ...[
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: note.tags.map((tag) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest
-                              .withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          tag,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
+                  if (note.tags.isNotEmpty && !isMoodNote) ...[
+                    const SizedBox(height: 6), // Reduced spacing
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: note.tags.map((tag) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHighest
+                                .withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(6),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                          child: Text(
+                            tag,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 10, // Explicitly small tag text
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -607,7 +647,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
             ),
             const SizedBox(width: 8),
             Text(
-              'Streakly',
+              'Notes',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),

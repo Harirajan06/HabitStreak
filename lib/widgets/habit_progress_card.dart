@@ -38,12 +38,12 @@ class HabitProgressCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           onTap: onPressed ?? () => HabitDetailScreen.show(context, habit),
           child: Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   padding: const EdgeInsets.all(2),
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
@@ -56,7 +56,7 @@ class HabitProgressCard extends StatelessWidget {
                     child: Icon(
                       habit.icon,
                       color: habit.color,
-                      size: 20,
+                      size: 22,
                     ),
                   ),
                 ),

@@ -111,11 +111,14 @@ class StreaklyApp extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.light,
+            scaffoldBackgroundColor:
+                const Color(0xFFF8F9FA), // Off-white background
             colorScheme: const ColorScheme.light(
               primary: Color(0xFF9B5DE5), // Bright Purple
               secondary: Color(0xFF9B5DE5),
-              surface: Color(0xFFF5F5F7), // Light Gray/White
-              onSurface: Colors.black87,
+              surface: Colors.white,
+              surfaceContainer: Colors.white,
+              onSurface: Colors.black,
             ),
             textTheme: GoogleFonts.interTextTheme(
               ThemeData.light().textTheme,
@@ -123,13 +126,31 @@ class StreaklyApp extends StatelessWidget {
             appBarTheme: AppBarTheme(
               centerTitle: true,
               elevation: 0,
-              backgroundColor: Colors.transparent,
+              backgroundColor: Colors.white,
               titleTextStyle: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: Colors.black,
               ),
-              iconTheme: const IconThemeData(color: Colors.black87),
+              iconTheme: const IconThemeData(color: Colors.black),
+            ),
+            bottomAppBarTheme: const BottomAppBarTheme(
+              color: Colors.white,
+              surfaceTintColor: Colors.transparent,
+            ),
+            dialogTheme: const DialogTheme(
+              backgroundColor: Colors.white,
+            ),
+            popupMenuTheme: const PopupMenuThemeData(
+              color: Colors.white,
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: Colors.grey[100],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
@@ -141,6 +162,7 @@ class StreaklyApp extends StatelessWidget {
               ),
             ),
             cardTheme: const CardTheme(
+              color: Colors.white,
               elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(16)),
@@ -150,10 +172,13 @@ class StreaklyApp extends StatelessWidget {
           darkTheme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.dark,
+            scaffoldBackgroundColor:
+                const Color(0xFF101116), // Dark Blue-Black Background
             colorScheme: const ColorScheme.dark(
               primary: Color(0xFF9B5DE5), // Bright Purple
               secondary: Color(0xFF9B5DE5),
-              surface: Color(0xFF1E1E1E), // Lighter dark background
+              surface: Color(0xFF15171f), // #15171f for Cards/Widgets
+              surfaceContainer: Color(0xFF15171f),
             ),
             textTheme: GoogleFonts.interTextTheme(
               ThemeData.dark().textTheme,
@@ -161,11 +186,29 @@ class StreaklyApp extends StatelessWidget {
             appBarTheme: AppBarTheme(
               centerTitle: true,
               elevation: 0,
-              backgroundColor: Colors.transparent,
+              backgroundColor: const Color(0xFF15171f), // #15171f
               titleTextStyle: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
+              ),
+            ),
+            bottomAppBarTheme: const BottomAppBarTheme(
+              color: Color(0xFF15171f), // #15171f
+              surfaceTintColor: Colors.transparent,
+            ),
+            dialogTheme: const DialogTheme(
+              backgroundColor: Color(0xFF15171f), // #15171f
+            ),
+            popupMenuTheme: const PopupMenuThemeData(
+              color: Color(0xFF15171f), // #15171f
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: const Color(0xFF15171f), // #15171f
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
               ),
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
@@ -178,6 +221,7 @@ class StreaklyApp extends StatelessWidget {
               ),
             ),
             cardTheme: const CardTheme(
+              color: Color(0xFF15171f), // #15171f
               elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(16)),

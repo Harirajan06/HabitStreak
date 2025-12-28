@@ -13,8 +13,7 @@ import '../../providers/note_provider.dart';
 import '../../providers/theme_provider.dart'; // Import ThemeProvider
 import '../../models/habit.dart';
 import '../../services/export_import_service.dart';
-import '../../widgets/modern_button.dart';
-import '../main_navigation_screen.dart';
+
 import '../auth/splash_screen.dart';
 
 import '../subscription/subscription_plans_screen.dart';
@@ -553,39 +552,6 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        _buildMenuCard(
-          context,
-          [
-            _buildMenuItem(
-              context,
-              title: 'Sign Out',
-              subtitle: 'Sign out of your account',
-              icon: Icons.logout,
-              iconColor: Colors.redAccent,
-              onTap: () {
-                _showSignOutDialog(context);
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // Developer Tools (Only visible in debug mode or for manual testing)
-        // Ideally checking kDebugMode, but for now we leave it visible for the user to test
-        _buildMenuCard(
-          context,
-          [
-            _buildMenuItem(
-              context,
-              title: 'Developer Tools',
-              subtitle: 'Debug & Test Features',
-              icon: Icons.developer_mode,
-              iconColor: Colors.blueGrey,
-              onTap: () {
-                _showDeveloperOptions(context);
-              },
-            ),
-          ],
-        ),
       ],
     );
   }
@@ -1071,51 +1037,6 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  void _showSignOutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: ModernButton(
-                    text: 'Cancel',
-                    type: ModernButtonType.outline,
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: ModernButton(
-                    text: 'Sign Out',
-                    type: ModernButtonType.destructive,
-                    onPressed: () {
-                      Provider.of<AuthProvider>(context, listen: false)
-                          .logout();
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                            builder: (_) =>
-                                const MainNavigationScreen(initialIndex: 0)),
-                        (route) => false,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showBackupDialog(BuildContext context) {
     final theme = Theme.of(context);
     showModalBottomSheet(
@@ -1485,58 +1406,6 @@ class ProfileScreen extends StatelessWidget {
     }
 
     return totalScore;
-  }
-
-  void _showDeveloperOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Consumer<AuthProvider>(
-          builder: (context, authProvider, child) {
-            final isPremium = authProvider.currentUser?.premium ?? false;
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Developer Options',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 20),
-                    SwitchListTile(
-                      title: const Text('Mock Premium Status'),
-                      subtitle: const Text('Toggle to test Pro features'),
-                      value: isPremium,
-                      activeColor: const Color(0xFFFFD700),
-                      onChanged: (value) {
-                        authProvider.setPremiumStatus(value);
-                      },
-                    ),
-                    const Divider(),
-                    ListTile(
-                      leading:
-                          const Icon(Icons.delete_forever, color: Colors.red),
-                      title: const Text('Clear All Data'),
-                      subtitle: const Text('Reset habits and history'),
-                      onTap: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Not implemented yet')),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
   }
 
   int _calculateCompletionScore(HabitProvider habitProvider) {

@@ -12,7 +12,7 @@ class MultiCompletionButton extends StatelessWidget {
   const MultiCompletionButton({
     super.key,
     required this.habit,
-    this.size = 32,
+    this.size = 36,
     this.isSquare = false,
   });
 

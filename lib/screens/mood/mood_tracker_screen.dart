@@ -104,11 +104,11 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
             child: Column(
               children: [
                 _buildCalendar(theme),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
                 _buildMoodEntryCard(theme),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 _buildMoodAnalysisCard(theme),
-                const SizedBox(height: 100), // Bottom padding for nav bar
+                const SizedBox(height: 80), // Bottom padding for nav bar
               ],
             ),
           ),
@@ -457,7 +457,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
                 );
               },
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -508,7 +508,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
                     GestureDetector(
                       onTap: () async {
                         final hasMood = todayMood != null;
@@ -572,7 +572,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
-                          vertical: 12,
+                          vertical: 8,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
@@ -630,7 +630,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
             );
           },
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(12),
             child: Row(
               children: [
                 Container(

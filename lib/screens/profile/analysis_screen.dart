@@ -89,8 +89,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       ),
       body: Consumer<HabitProvider>(
         builder: (context, habitProvider, child) {
-          final totalHabits = habitProvider.activeHabits.length;
-          final shouldLockScreen = !isPremium && totalHabits >= 3;
+          final shouldLockScreen = !isPremium;
 
           return Stack(
             children: [
@@ -153,7 +152,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Analysis is limited to 2 habits for free users.\nUpgrade to see statistics for all habits.',
+                                    'Detailed analysis is a Premium feature.\nUpgrade to unlock full habit insights.',
                                     textAlign: TextAlign.center,
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       color: theme.colorScheme.onSurface
