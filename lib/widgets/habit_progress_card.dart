@@ -8,11 +8,13 @@ import 'marquee_widget.dart';
 class HabitProgressCard extends StatelessWidget {
   final Habit habit;
   final VoidCallback? onPressed;
+  final VoidCallback? onLongPress;
 
   const HabitProgressCard({
     super.key,
     required this.habit,
     this.onPressed,
+    this.onLongPress,
   });
 
   @override
@@ -37,6 +39,7 @@ class HabitProgressCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
           onTap: onPressed ?? () => HabitDetailScreen.show(context, habit),
+          onLongPress: onLongPress,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
@@ -118,7 +121,7 @@ class HabitProgressCard extends StatelessWidget {
                             child: const Icon(
                               Icons.local_fire_department,
                               size: 12,
-                              color: Colors.white,
+                              color: Color(0xFF9B5DE5),
                             ),
                           ),
                           const SizedBox(width: 4),

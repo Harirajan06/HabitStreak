@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../models/habit.dart';
 import '../models/note.dart';
 import '../providers/note_provider.dart';
+import '../services/toast_service.dart';
 
 class HabitNoteIconButton extends StatelessWidget {
   final Habit habit;
@@ -209,13 +210,7 @@ class HabitNoteIconButton extends StatelessWidget {
                         await _saveNote(context, title, content);
                         if (context.mounted) {
                           Navigator.of(dialogContext).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Note saved'),
-                              behavior: SnackBarBehavior.floating,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
+                          ToastService.show(context, 'Note saved');
                         }
                       },
                       style: ElevatedButton.styleFrom(

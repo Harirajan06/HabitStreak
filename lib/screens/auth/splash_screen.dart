@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:lottie/lottie.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/admob_service.dart';
 import '../../services/navigation_service.dart';
@@ -136,12 +136,12 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Lottie.asset(
-                      'assets/animations/Flame animation(1).json',
-                      width: 150,
-                      height: 150,
+                    Image.asset(
+                      'assets/splash/splash.png',
+                      width: 250,
+                      height: 250,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 0),
                     RichText(
                       text: TextSpan(
                         style: TextStyle(

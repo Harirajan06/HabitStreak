@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Include all app files (Hive databases are stored here) -->
+    <include domain="file" path="." />
+    
+    <!-- Include shared preferences -->
+    <include domain="sharedpref" path="." />
+    
+    <!-- Exclude cache directory (temporary files) -->
+    <exclude domain="file" path="cache/" />
+    
+    <!-- Exclude code cache -->
+    <exclude domain="file" path="code_cache/" />
+</full-backup-content>

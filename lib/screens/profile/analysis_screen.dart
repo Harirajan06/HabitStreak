@@ -129,7 +129,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
                                 color: theme.cardColor,
-                                borderRadius: BorderRadius.circular(24),
+                                borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.1),
@@ -215,7 +215,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: Theme.of(context).colorScheme.outline.withOpacity(0.1)),
             boxShadow: [
@@ -375,7 +375,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
               position: PopupMenuPosition.under,
               color: Theme.of(context).cardColor,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
+                  borderRadius: BorderRadius.circular(12)),
               onSelected: (value) {
                 setState(() {
                   _selectedPeriod = value;
@@ -424,7 +424,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
           ),
@@ -683,7 +683,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
           ),
@@ -778,7 +778,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
           ),

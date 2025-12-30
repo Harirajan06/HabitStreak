@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import '../main.dart'; // Import to access scaffoldMessengerKey
+// Import to access scaffoldMessengerKey
 
 class AdmobService {
   static String get interstitialAdUnitId {

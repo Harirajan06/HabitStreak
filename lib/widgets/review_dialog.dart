@@ -1,6 +1,7 @@
 // lib/widgets/review_dialog.dart
 
 import 'package:flutter/material.dart';
+import '../services/toast_service.dart';
 
 class ReviewDialog extends StatefulWidget {
   const ReviewDialog({super.key});
@@ -28,12 +29,7 @@ class _ReviewDialogState extends State<ReviewDialog> {
     Navigator.of(context).pop();
 
     // Optional: Show a "Thank You" message to the user
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Thank you for your feedback!'),
-        duration: Duration(seconds: 3),
-      ),
-    );
+    ToastService.show(context, 'Thank you for your feedback!');
   }
 
   @override
@@ -56,7 +52,8 @@ class _ReviewDialogState extends State<ReviewDialog> {
             Text(
               'Your feedback helps us improve. Please take a moment to share your thoughts!',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha((0.8 * 255).toInt()),
+                color:
+                    theme.colorScheme.onSurface.withAlpha((0.8 * 255).toInt()),
               ),
             ),
             const SizedBox(height: 20),

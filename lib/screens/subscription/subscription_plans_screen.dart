@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../../services/purchase_service.dart';
+import '../../services/toast_service.dart';
 
 class SubscriptionPlansScreen extends StatefulWidget {
   const SubscriptionPlansScreen({super.key});
@@ -22,6 +23,19 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
   Future<void> _fetchOfferings() async {
     final offerings = await PurchaseService.instance.getOfferings();
+    if (offerings?.current != null) {
+      debugPrint('--- FREVENUECAT DEBUG ---');
+      debugPrint(
+          'Total Packages: ${offerings!.current!.availablePackages.length}');
+      for (var package in offerings.current!.availablePackages) {
+        debugPrint(
+            'Package ID: ${package.identifier}, Product: ${package.storeProduct.identifier}, Type: ${package.packageType}');
+      }
+      debugPrint('--- END DEBUG ---');
+    } else {
+      debugPrint('--- REVENUECAT DEBUG: No Current Offering Found ---');
+    }
+
     if (mounted) {
       setState(() {
         _offerings = offerings;
@@ -43,13 +57,29 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
   Future<void> _restorePurchases() async {
     setState(() => _isLoading = true);
+
+    // Listen to the status stream for feedback
+    final subscription = PurchaseService.instance.statusStream.listen((status) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+
+        if (status == 'success') {
+          ToastService.show(context, '✅ Purchases restored successfully!');
+        } else if (status.contains('No purchases to restore')) {
+          ToastService.show(context, 'ℹ️ No purchases found to restore');
+        } else if (status.startsWith('error:')) {
+          ToastService.show(context, '❌ ${status.replaceFirst('error: ', '')}',
+              isError: true);
+        }
+      }
+    });
+
     await PurchaseService.instance.restorePurchases();
-    if (mounted) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Restore completed')),
-      );
-    }
+
+    // Cancel subscription after a delay to ensure we catch the status
+    Future.delayed(const Duration(seconds: 2), () {
+      subscription.cancel();
+    });
   }
 
   @override
@@ -144,17 +174,37 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   if (_offerings != null &&
                       _offerings!.current != null &&
                       _offerings!.current!.availablePackages.isNotEmpty) ...[
-                    ..._offerings!.current!.availablePackages.map((package) {
-                      final isAnnual =
-                          package.packageType == PackageType.annual;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildPackageCard(
-                          context,
-                          package,
-                          isBestValue: isAnnual,
-                          onTap: () => _purchasePackage(package),
-                        ),
+                    Builder(builder: (context) {
+                      // Sort packages: Monthly -> 3 Month -> 6 Month -> Annual -> Others
+                      final packages =
+                          _offerings!.current!.availablePackages.toList();
+                      packages.sort((a, b) {
+                        final order = {
+                          PackageType.monthly: 1,
+                          PackageType.threeMonth: 2,
+                          PackageType.sixMonth: 3,
+                          PackageType.annual: 4,
+                          PackageType.lifetime: 5,
+                        };
+                        final aOrder = order[a.packageType] ?? 99;
+                        final bOrder = order[b.packageType] ?? 99;
+                        return aOrder.compareTo(bOrder);
+                      });
+
+                      return Column(
+                        children: packages.map((package) {
+                          final isAnnual =
+                              package.packageType == PackageType.annual;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: _buildPackageCard(
+                              context,
+                              package,
+                              isBestValue: isAnnual,
+                              onTap: () => _purchasePackage(package),
+                            ),
+                          );
+                        }).toList(),
                       );
                     }),
                   ] else ...[
@@ -178,6 +228,27 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               ),
             ),
     );
+  }
+
+  String _getPeriodString(PackageType type) {
+    switch (type) {
+      case PackageType.annual:
+        return '/ year';
+      case PackageType.sixMonth:
+        return '/ 6 months';
+      case PackageType.threeMonth:
+        return '/ 3 months';
+      case PackageType.twoMonth:
+        return '/ 2 months';
+      case PackageType.monthly:
+        return '/ month';
+      case PackageType.weekly:
+        return '/ week';
+      case PackageType.lifetime:
+        return ' Lifetime';
+      default:
+        return '';
+    }
   }
 
   Widget _buildPackageCard(BuildContext context, Package package,
@@ -258,7 +329,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   ),
                 ),
                 Text(
-                  isBestValue ? '/ year' : '/ month',
+                  _getPeriodString(package.packageType),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.6),
                   ),

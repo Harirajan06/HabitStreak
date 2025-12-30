@@ -188,12 +188,15 @@ class NotificationService {
   }
 
   Future<void> scheduleHabitReminder(
-      int id, String title, String body, TimeOfDay time) async {
+      int id, String title, String body, TimeOfDay time,
+      {bool forceNextDay = false}) async {
     try {
       final now = DateTime.now();
       var scheduled =
           DateTime(now.year, now.month, now.day, time.hour, time.minute);
-      if (!scheduled.isAfter(now)) {
+
+      // If time has passed OR we want to force next day (e.g. habit completed today)
+      if (forceNextDay || !scheduled.isAfter(now)) {
         scheduled = scheduled.add(const Duration(days: 1));
       }
 
@@ -206,7 +209,7 @@ class NotificationService {
       );
 
       debugPrint(
-          '🗓️ Scheduled reminder id=$id at ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}');
+          '🗓️ Scheduled reminder id=$id at ${scheduled.toString()} (forceNextDay: $forceNextDay)');
     } catch (e) {
       debugPrint('❌ Failed to schedule reminder $id: $e');
     }
@@ -218,13 +221,16 @@ class NotificationService {
 
     if (habit.reminderTimes.isEmpty) return;
 
+    final isCompleted = habit.isFullyCompletedToday();
+
     for (int i = 0; i < habit.reminderTimes.length; i++) {
       final time = habit.reminderTimes[i];
       final id = _generateNotificationId(habit.id, i);
       final title = habit.name;
       final body = 'Time to complete your habit: ${habit.name}';
 
-      await scheduleHabitReminder(id, title, body, time);
+      await scheduleHabitReminder(id, title, body, time,
+          forceNextDay: isCompleted);
     }
   }
 

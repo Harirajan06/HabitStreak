@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import '../../models/product.dart';
+import '../../services/toast_service.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -120,7 +121,8 @@ class _ShopScreenState extends State<ShopScreen> {
                         ),
                       ),
                     ),
-                    if (product.imageUrl != null && product.imageUrl!.isNotEmpty)
+                    if (product.imageUrl != null &&
+                        product.imageUrl!.isNotEmpty)
                       Image.network(
                         product.imageUrl!,
                         fit: BoxFit.cover,
@@ -194,15 +196,11 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   void _buyProduct(Product product) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Purchased ${product.name}!')),
-    );
+    ToastService.show(context, 'Purchased ${product.name}!');
   }
 
   void _addToCart(Product product) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${product.name} added to cart!')),
-    );
+    ToastService.show(context, '${product.name} added to cart!');
   }
 
   void _showProductDetail(Product product) {
@@ -275,12 +273,8 @@ class _ShopScreenState extends State<ShopScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${product.name} added to cart!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
+                    ToastService.show(
+                        context, '${product.name} added to cart!');
                   },
                   child: const Text('Add to Cart'),
                 ),
@@ -292,5 +286,3 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 }
-
-

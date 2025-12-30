@@ -21,6 +21,7 @@ import '../../widgets/premium_lock_dialog.dart';
 import '../../widgets/hero_stats_card.dart';
 
 import '../../services/purchase_service.dart';
+import '../../services/toast_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -1030,9 +1031,7 @@ class ProfileScreen extends StatelessWidget {
       );
     } else {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not launch $url')),
-        );
+        ToastService.show(context, 'Could not launch $url', isError: true);
       }
     }
   }
@@ -1102,22 +1101,6 @@ class ProfileScreen extends StatelessWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.blueAccent.withAlpha((0.16 * 255).round()),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.save_alt, color: Colors.blueAccent),
-                  ),
-                  title: const Text('Save to Device'),
-                  subtitle: const Text(
-                      'Store a copy inside the app documents folder'),
-                  onTap: () => _handleExportSave(context, sheetContext),
-                ),
-                const SizedBox(height: 8),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
                       color: Color(0xFF9B5DE5).withAlpha((0.16 * 255).round()),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1151,57 +1134,24 @@ class ProfileScreen extends StatelessWidget {
       return;
     }
 
-    final messenger = ScaffoldMessenger.of(context);
     try {
       await ExportImportService.instance.shareExport();
-      messenger.showSnackBar(
-        const SnackBar(
-            content: Text('Opening share sheet with your backup...')),
-      );
+      if (context.mounted) {
+        ToastService.show(context, 'Opening share sheet with your backup...');
+      }
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Export failed: $e'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    }
-  }
-
-  Future<void> _handleExportSave(
-      BuildContext context, BuildContext sheetContext) async {
-    Navigator.of(sheetContext).pop();
-
-    // Check Premium Status
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isPremium = authProvider.currentUser?.premium ?? false;
-
-    if (!isPremium) {
-      showPremiumLockDialog(context,
-          "Exporting data is a Pro feature. Back up your habits today!");
-      return;
-    }
-
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final file = await ExportImportService.instance.exportToFile();
-      messenger.showSnackBar(
-        SnackBar(content: Text('Backup saved to ${file.path}')),
-      );
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Export failed: $e'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      if (context.mounted) {
+        ToastService.show(context, 'Export failed: $e', isError: true);
+      }
     }
   }
 
   Future<void> _handleImport(
       BuildContext context, BuildContext sheetContext) async {
     Navigator.of(sheetContext).pop();
-    final messenger = ScaffoldMessenger.of(context);
+    // Actually, I should remove messenger if I replace all usages.
+    // But let's check carefully.
+
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -1214,17 +1164,18 @@ class ProfileScreen extends StatelessWidget {
 
       final path = result.files.first.path;
       if (path == null) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('Selected file is not accessible')),
-        );
+        if (context.mounted) {
+          ToastService.show(context, 'Selected file is not accessible',
+              isError: true);
+        }
         return;
       }
 
       final file = File(path);
       final content = await file.readAsString();
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Importing data...')),
-      );
+      if (context.mounted) {
+        ToastService.show(context, 'Importing data...');
+      }
 
       final resultMap = await ExportImportService.instance
           .importFromJsonString(content, overwrite: false);
@@ -1237,12 +1188,10 @@ class ProfileScreen extends StatelessWidget {
             await Provider.of<NoteProvider>(context, listen: false).loadNotes();
           }
         }
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('Import complete. Restarting app...'),
-            duration: const Duration(seconds: 1),
-          ),
-        );
+
+        if (context.mounted) {
+          ToastService.show(context, 'Import complete. Restarting app...');
+        }
 
         // Wait for snackbar
         await Future.delayed(const Duration(seconds: 1));
@@ -1255,21 +1204,16 @@ class ProfileScreen extends StatelessWidget {
           );
         }
       } else {
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-                'Import failed: ${resultMap['error']} (backup: ${resultMap['backup']})'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        if (context.mounted) {
+          ToastService.show(context,
+              'Import failed: ${resultMap['error']} (backup: ${resultMap['backup']})',
+              isError: true);
+        }
       }
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('Import failed: $e'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      if (context.mounted) {
+        ToastService.show(context, 'Import failed: $e', isError: true);
+      }
     }
   }
 
@@ -1324,24 +1268,15 @@ class ProfileScreen extends StatelessWidget {
 
                 if (context.mounted) {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Widget configuration cleared!'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  ToastService.show(context, 'Widget configuration cleared!');
                 }
               } catch (e) {
                 debugPrint('Error clearing widget config: $e');
                 if (context.mounted) {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Failed to clear widget configuration'),
-                      backgroundColor: Colors.red,
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  ToastService.show(
+                      context, 'Failed to clear widget configuration',
+                      isError: true);
                 }
               }
             },

@@ -16,6 +16,7 @@ import 'services/hive_service.dart';
 import 'notification_initializer.dart';
 import 'services/purchase_service.dart';
 import 'services/widget_service.dart';
+import 'services/auto_backup_service.dart';
 
 import 'screens/widgets/widget_habit_selection_screen.dart';
 
@@ -57,6 +58,18 @@ void main() async {
     debugPrint('✅ PurchaseService initialized and restore attempted');
   } catch (e) {
     debugPrint('⚠️ Purchase service unavailable: $e');
+  }
+
+  // Initialize Auto Backup Service
+  try {
+    // No explicit init needed currently as it uses Hive lazily,
+    // but good practice to have the method if we expand.
+    await AutoBackupService.instance.init();
+    // Perform initial check on startup
+    await AutoBackupService.instance.performBackupIfNeeded();
+    debugPrint('✅ AutoBackupService initialized');
+  } catch (e) {
+    debugPrint('⚠️ AutoBackupService failed: $e');
   }
 
   // Prevent Flutter-specific non-fatal framework crashes (DevicePreview)
@@ -296,6 +309,11 @@ class _StreaklyLogicWrapperState extends State<StreaklyLogicWrapper>
               .syncWidgetActions();
         }
       });
+    }
+
+    if (state == AppLifecycleState.resumed) {
+      // Check for auto backup when coming to foreground
+      AutoBackupService.instance.performBackupIfNeeded();
     }
   }
 

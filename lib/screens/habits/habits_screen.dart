@@ -10,6 +10,7 @@ import '../main_navigation_screen.dart';
 import '../../services/navigation_service.dart';
 import '../profile/profile_screen.dart';
 import '../subscription/subscription_plans_screen.dart';
+import '../../utils/habit_actions.dart';
 
 class HabitsScreen extends StatefulWidget {
   const HabitsScreen({super.key});
@@ -86,7 +87,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                     ),
                   ),
                   TextSpan(
-                    text: ' Sensai',
+                    text: 'Sensai',
                     style: TextStyle(
                       color: theme.colorScheme.primary,
                     ),
@@ -284,7 +285,11 @@ class _HabitsScreenState extends State<HabitsScreen>
           final habit = habits[index - 1];
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: HabitProgressCard(habit: habit),
+            child: HabitProgressCard(
+              habit: habit,
+              onLongPress: () =>
+                  HabitActions.showHabitOptionsMenu(context, habit),
+            ),
           );
         },
       ),

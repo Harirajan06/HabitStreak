@@ -8,7 +8,8 @@ import 'hive_service.dart';
 
 class ExportImportService {
   static ExportImportService? _instance;
-  static ExportImportService get instance => _instance ??= ExportImportService._();
+  static ExportImportService get instance =>
+      _instance ??= ExportImportService._();
 
   ExportImportService._();
 
@@ -17,10 +18,15 @@ class ExportImportService {
     return jsonEncode(data);
   }
 
+  Future<Directory> getDocumentsDirectory() async {
+    return await getApplicationDocumentsDirectory();
+  }
+
   Future<File> exportToFile({String? fileName}) async {
     final jsonString = await exportAllToJsonString();
     final docs = await getApplicationDocumentsDirectory();
-    final name = fileName ?? 'streakly_export_${DateTime.now().toIso8601String()}.json';
+    final name =
+        fileName ?? 'streakly_export_${DateTime.now().toIso8601String()}.json';
     final file = File('${docs.path}/$name');
     await file.writeAsString(jsonString);
     return file;
@@ -37,11 +43,14 @@ class ExportImportService {
     );
   }
 
-  Future<Map<String, dynamic>> importFromJsonString(String jsonString, {bool overwrite = false}) async {
+  Future<Map<String, dynamic>> importFromJsonString(String jsonString,
+      {bool overwrite = false}) async {
     final Map<String, dynamic> data = jsonDecode(jsonString);
 
     // Create backup automatically
-    final backup = await exportToFile(fileName: 'streakly_backup_before_import_${DateTime.now().toIso8601String()}.json');
+    final backup = await exportToFile(
+        fileName:
+            'streakly_backup_before_import_${DateTime.now().toIso8601String()}.json');
 
     try {
       await HiveService.instance.importJson(data, overwrite: overwrite);

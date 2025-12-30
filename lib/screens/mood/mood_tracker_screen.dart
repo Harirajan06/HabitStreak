@@ -9,6 +9,7 @@ import '../../providers/mood_provider.dart';
 import '../../providers/note_provider.dart';
 import '../../models/note.dart';
 import 'mood_analysis_screen.dart';
+import '../../services/toast_service.dart';
 
 class MoodTrackerScreen extends StatefulWidget {
   const MoodTrackerScreen({super.key});
@@ -125,7 +126,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
           decoration: BoxDecoration(
             color: theme
                 .colorScheme.surface, // Changed to surface for cleaner look
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: theme.colorScheme.outline.withOpacity(0.15),
             ),
@@ -274,6 +275,29 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
                 }
                 return null;
               },
+              outsideBuilder: (context, day, focusedDay) {
+                final moodProvider =
+                    Provider.of<MoodProvider>(context, listen: false);
+                if (moodProvider.hasMoodForDate(day)) {
+                  final moodEntry = moodProvider.getMoodForDate(day)!;
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Opacity(
+                        opacity: 0.5,
+                        child: Text(
+                          moodEntry.emoji,
+                          style: const TextStyle(fontSize: 34),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return null;
+              },
             ),
             onDaySelected: (selectedDay, focusedDay) async {
               setState(() {
@@ -290,7 +314,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
 
               // Block future dates
               if (selected.isAfter(today)) {
-                _showFloatingWarning(
+                ToastService.show(
                     context, 'Cannot create mood for future dates');
                 return;
               }
@@ -441,12 +465,12 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -615,12 +639,12 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           onTap: () {
             Navigator.push(
               context,
@@ -698,63 +722,5 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen> {
         ),
       ),
     );
-  }
-
-  void _showFloatingWarning(BuildContext context, String message) {
-    final overlay = Overlay.of(context);
-    final theme = Theme.of(context);
-
-    late OverlayEntry overlayEntry;
-
-    overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 16,
-        left: 16,
-        right: 16,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF9B5DE5), // App theme purple
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.info_outline,
-                  color: Colors.white, // White icon for contrast
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  message,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white, // White text for contrast
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(overlayEntry);
-
-    // Remove after 1 second
-    Future.delayed(const Duration(seconds: 1), () {
-      overlayEntry.remove();
-    });
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../services/toast_service.dart';
 
 class SupportDialog extends StatefulWidget {
   const SupportDialog({super.key});
@@ -90,19 +91,16 @@ class _SupportDialogState extends State<SupportDialog> {
 
             if (email.isEmpty || !email.contains('@')) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Please enter a valid email address')),
-                );
+                ToastService.show(context, 'Please enter a valid email address',
+                    isError: true);
               }
               return;
             }
 
             if (message.isEmpty) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter your message')),
-                );
+                ToastService.show(context, 'Please enter your message',
+                    isError: true);
               }
               return;
             }
@@ -120,25 +118,16 @@ class _SupportDialogState extends State<SupportDialog> {
                 await launchUrl(emailUri);
                 if (mounted) {
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Opening email client...'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  ToastService.show(context, 'Opening email client...');
                 }
               } else {
                 throw 'Could not launch $emailUri';
               }
             } catch (_) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                        'Could not open email client. Please send your message to habitmakerc@gmail.com'),
-                    duration: Duration(seconds: 4),
-                  ),
-                );
+                ToastService.show(context,
+                    'Could not open email client. Please send your message to habitmakerc@gmail.com',
+                    isError: true);
               }
             }
           },

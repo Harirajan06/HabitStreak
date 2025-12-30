@@ -8,6 +8,7 @@ import '../../providers/note_provider.dart';
 import '../../providers/habit_provider.dart';
 import '../../models/habit.dart';
 import '../../models/note.dart';
+import '../../services/toast_service.dart';
 
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
@@ -322,6 +323,33 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Date label if no mood note exists
+                if (!hasMoodNote)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF9B5DE5).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFF9B5DE5).withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          dateLabel,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: const Color(0xFF9B5DE5).withOpacity(0.9),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 // Notes List (Header removed, integrated into cards)
                 for (final note in sortedNotes)
                   Padding(
@@ -329,10 +357,9 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                     child: _buildRoadmapNoteCard(
                       context,
                       note,
-                      // Pass dateLabel only if it's a mood note OR if there are no mood notes for this day
+                      // Pass dateLabel only to mood notes
                       (note.tags.contains('Mood') ||
-                              note.title.startsWith('Mood:') ||
-                              !hasMoodNote)
+                              note.title.startsWith('Mood:'))
                           ? dateLabel
                           : '',
                     ),
@@ -425,11 +452,45 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
               TextButton(
                 onPressed: () async {
                   Navigator.pop(context);
+
                   final noteProvider =
                       Provider.of<NoteProvider>(context, listen: false);
+                  final moodProvider =
+                      Provider.of<MoodProvider>(context, listen: false);
+
+                  // Check if this is a mood note
+                  final isMoodNote = note.tags.contains('Mood') ||
+                      note.title.startsWith('Mood:');
+
+                  if (isMoodNote) {
+                    // Extract date from mood note ID (format: mood_YYYY-MM-DD)
+                    final dateKey = note.id.replaceFirst('mood_', '');
+                    try {
+                      final date = DateTime.parse(dateKey);
+                      // Get the existing mood entry
+                      final existingMood = moodProvider.getMoodForDate(date);
+                      if (existingMood != null) {
+                        // Update the mood entry with empty notes instead of deleting
+                        await moodProvider.saveMood(
+                          date: existingMood.date,
+                          emoji: existingMood.emoji,
+                          label: existingMood.label,
+                          tags: existingMood.tags,
+                          notes: '', // Clear the notes
+                          score: existingMood.score,
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint('Error updating mood note: $e');
+                    }
+                  }
+
+                  // Delete the note
                   await noteProvider.deleteNote(note.id);
+
                   if (context.mounted) {
                     await _refreshNotes();
+                    ToastService.show(context, 'Note deleted successfully');
                   }
                 },
                 child: const Text(
@@ -492,16 +553,6 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // Date for Habit
-                    if (dateLabel.isNotEmpty)
-                      Text(
-                        dateLabel,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: habit.color.withOpacity(0.7),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
                   ] else if (isMoodNote) ...[
                     // Date Label (Replacing 'Mood')
                     Text(

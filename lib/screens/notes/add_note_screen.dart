@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../providers/note_provider.dart';
 import '../../providers/habit_provider.dart';
 import '../../models/note.dart';
+import '../../services/toast_service.dart';
 
 class AddNoteScreen extends StatefulWidget {
   final Note? noteToEdit;
@@ -81,14 +82,11 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
 
     if (mounted) {
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.noteToEdit != null
+      ToastService.show(
+          context,
+          widget.noteToEdit != null
               ? 'Note updated successfully!'
-              : 'Note created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+              : 'Note created successfully!');
     }
   }
 

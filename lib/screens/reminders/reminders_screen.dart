@@ -4,6 +4,7 @@ import '../../providers/habit_provider.dart';
 import '../../models/habit.dart';
 import '../../services/notification_service.dart';
 import 'package:intl/intl.dart';
+import '../../services/toast_service.dart';
 // Test notification screen removed
 
 class RemindersScreen extends StatelessWidget {
@@ -228,10 +229,8 @@ class RemindersScreen extends StatelessWidget {
                                             await NotificationService()
                                                 .cancelHabitReminders(habit.id);
                                             if (context.mounted) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(SnackBar(
-                                                      content: Text(
-                                                          'Reminders cancelled for ${habit.name}')));
+                                              ToastService.show(context,
+                                                  'Reminders cancelled for ${habit.name}');
                                             }
                                           }
                                         },
@@ -351,10 +350,8 @@ class RemindersScreen extends StatelessWidget {
                                       matchedHabit.id, updated);
                                 }
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Cancelled reminder ${req.title ?? ''}')));
+                                  ToastService.show(context,
+                                      'Cancelled reminder ${req.title ?? ''}');
                                 }
                                 if (context.mounted) {
                                   Navigator.of(context).pop();

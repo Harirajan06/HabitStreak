@@ -12,6 +12,7 @@
         android:label="HabitSensai"
         android:name="${applicationName}"
         android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

@@ -10,7 +10,8 @@ import '../../widgets/review_dialog.dart';
 // NotificationService and timezone removed — reminders are stored but not scheduled
 import '../../providers/auth_provider.dart'; // Import AuthProvider
 import '../../services/notification_service.dart';
-import '../subscription/subscription_plans_screen.dart'; // Add this import
+import '../subscription/subscription_plans_screen.dart';
+import '../../services/toast_service.dart';
 
 class AddHabitScreen extends StatefulWidget {
   final Habit? habitToEdit;
@@ -184,10 +185,9 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
     if (habitProvider.isHabitNameTaken(desiredName,
         excludeId: isEditing ? habitId : null)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Habit name already exists. Choose a unique name.')),
-      );
+      ToastService.show(
+          context, 'Habit name already exists. Choose a unique name.',
+          isError: true);
       return;
     }
     // Ensure stored reminders list size matches remindersPerDay setting

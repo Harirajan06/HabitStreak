@@ -94,11 +94,13 @@ dependencies:
   url_launcher: ^6.2.1
   purchases_flutter: ^8.11.0
   purchases_ui_flutter: ^8.11.0
+  path: ^1.9.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -126,6 +128,8 @@ flutter:
   assets:
     - assets/animations/
     - assets/sound/
+    - assets/icon/
+    - assets/splash/
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -153,7 +157,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
   web:
@@ -164,6 +168,13 @@ flutter_icons:
     generate: true
   linux:
     generate: true
-  image_path: "assets/icon/Sensai.jpeg"
+  image_path: "assets/icon/AppIcon.png"
   adaptive_icon_background: "#1a1a2e"
-  adaptive_icon_foreground: "assets/icon/Sensai.jpeg"
+  adaptive_icon_foreground: "assets/icon/AppIcon.png"
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/splash/splash.png
+  android_12:
+    image: assets/splash/splash.png
+    color: "#ffffff"

@@ -7,6 +7,7 @@ import '../services/hive_service.dart';
 import '../services/admob_service.dart'; // Import AdmobService
 import '../services/widget_service.dart';
 import '../services/sound_service.dart';
+import '../services/notification_service.dart';
 
 class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
   final List<Habit> _habits = [];
@@ -271,6 +272,11 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
       );
       _widgetService.updateWidgetForHabit(_habits[index],
           isDarkMode: _isDarkMode);
+
+      // Reschedule reminders based on new completion status
+      // If completed: reminders for today will be pushed to tomorrow
+      // If uncompleted (not applicable here as we only increment, but good for future): rescheduled for today
+      NotificationService().scheduleReminderForHabit(_habits[index]);
 
       // Ad logic moved to popup on completion
       // if (newCount > currentCount) {
