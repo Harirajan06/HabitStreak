@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/notification_service.dart';
 
 import '../main_navigation_screen.dart';
 
@@ -28,6 +29,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'Stay motivated by building and maintaining streaks for your habits.',
       icon: Icons.local_fire_department,
       color: Colors.orange,
+    ),
+    OnboardingPage(
+      title: 'Track Mood',
+      description:
+          'Understand your patterns by tracking your daily mood alongside your habits.',
+      icon: Icons.mood,
+      color: Colors.pinkAccent,
     ),
     OnboardingPage(
       title: 'Take Notes',
@@ -72,6 +80,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _completeOnboarding() async {
+    // Request permissions before finishing onboarding
+    await NotificationService().requestPermissions();
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('has_seen_onboarding', true);
     if (!mounted) return;

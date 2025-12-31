@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
+// import 'package:lottie/lottie.dart';
 import '../profile/profile_screen.dart';
 import '../subscription/subscription_plans_screen.dart';
 import 'package:provider/provider.dart';
@@ -687,14 +687,10 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         title: Row(
           children: [
             const SizedBox(width: 16),
-            SizedBox(
-              height: 40,
-              width: 40,
-              child: Lottie.asset(
-                'assets/animations/Flame animation(1).json',
-                repeat: true,
-                fit: BoxFit.contain,
-              ),
+            Icon(
+              Icons.edit_note,
+              size: 32,
+              color: theme.colorScheme.primary,
             ),
             const SizedBox(width: 8),
             Text(

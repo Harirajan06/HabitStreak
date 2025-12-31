@@ -56,6 +56,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     try {
       final prefs = await SharedPreferences.getInstance();
+      // Temporarily force onboarding to show for debugging/verification
       final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
 
       // Initialize saved view mode preference

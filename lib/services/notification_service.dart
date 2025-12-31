@@ -22,7 +22,7 @@ class NotificationService {
   static const String _channelDescription =
       'Daily habit reminders from Streakly';
 
-  Future<void> initNotifications() async {
+  Future<void> initNotifications({bool requestPermissions = true}) async {
     try {
       const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
       const iosInit = DarwinInitializationSettings();
@@ -68,17 +68,19 @@ class NotificationService {
               AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(androidChannel);
 
-      // Request platform permissions:
-      // - iOS: request via plugin
-      // - Android 13+: request notification runtime permission via plugin
-      // - Android exact alarms: optionally request exact alarm permission so user is prompted
-      // Request notification permissions and, on Android, prompt for exact alarm permission.
-      await _requestPermissions();
-      await _requestAndroidPermissions(requestExactAlarm: true);
+      // Request platform permissions if requested
+      if (requestPermissions) {
+        await this.requestPermissions();
+      }
       debugPrint('✅ NotificationService initialized');
     } catch (e) {
       debugPrint('❌ Error initializing notifications: $e');
     }
+  }
+
+  Future<void> requestPermissions() async {
+    await _requestPermissions();
+    await _requestAndroidPermissions(requestExactAlarm: true);
   }
 
   Future<void> _requestAndroidPermissions(

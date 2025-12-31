@@ -283,6 +283,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
     final cardColor = isDark ? const Color(0xFF2C2C2E) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
+    final subtextColor =
+        isDark ? Colors.white.withOpacity(0.7) : Colors.black.withOpacity(0.7);
     final borderColor =
         isDark ? const Color(0xFF9B5DE5) : const Color(0xFF9B5DE5);
 
@@ -349,6 +351,17 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                             color: textColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2.0),
+                          child: Text(
+                            _getPlanQuote(package),
+                            style: TextStyle(
+                              color: subtextColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                         Visibility(
@@ -433,6 +446,25 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         return 'Weekly';
       default:
         return 'Premium';
+    }
+  }
+
+  String _getPlanQuote(Package package) {
+    switch (package.packageType) {
+      case PackageType.annual:
+        return 'Best value for long-term habits';
+      case PackageType.sixMonth:
+        return 'Build a solid foundation';
+      case PackageType.threeMonth:
+        return 'Perfect for a seasonal goal';
+      case PackageType.monthly:
+        return 'Flexible and commitment-free';
+      case PackageType.lifetime:
+        return 'Pay once, build habits forever';
+      case PackageType.weekly:
+        return 'Start small, dream big';
+      default:
+        return 'Unleash your potential';
     }
   }
 

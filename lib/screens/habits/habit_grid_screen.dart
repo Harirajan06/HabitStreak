@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
+// import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../models/habit.dart';
 import '../../providers/habit_provider.dart';
@@ -13,6 +13,8 @@ import '../subscription/subscription_plans_screen.dart';
 import '../../providers/auth_provider.dart'; // Import AuthProvider
 import '../../widgets/marquee_widget.dart';
 import '../../utils/habit_actions.dart';
+import '../../widgets/modern_button.dart';
+import 'add_habit_screen.dart';
 
 class HabitGridScreen extends StatefulWidget {
   const HabitGridScreen({super.key});
@@ -43,16 +45,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
         title: Row(
           children: [
             const SizedBox(width: 16),
-            SizedBox(
-              height: 40,
-              width: 40,
-              child: Lottie.asset(
-                'assets/animations/Flame animation(1).json',
-                repeat: true,
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(width: 8),
+// Removed Lottie animation
             RichText(
               text: TextSpan(
                 style: theme.textTheme.headlineSmall?.copyWith(
@@ -119,30 +112,70 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
 
             if (habitProvider.habits.isEmpty) {
               return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.track_changes,
-                        size: 80,
-                        color: theme.colorScheme.onSurface
-                            .withAlpha((0.3 * 255).round())),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No habits found',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: theme.colorScheme.onSurface
-                            .withAlpha((0.6 * 255).round()),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withAlpha((0.2 * 255).round())),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withAlpha((0.15 * 255).round()),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.track_changes_outlined,
+                          size: 32,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Add some habits to see your progress grid',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface
-                            .withAlpha((0.4 * 255).round()),
+                      const SizedBox(height: 18),
+                      Text(
+                        'No habits found',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'Add your first habit to get started!',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withAlpha((0.6 * 255).round()),
+                            ),
+                      ),
+                      const SizedBox(height: 24),
+                      ModernButton(
+                        text: 'Add Habit',
+                        type: ModernButtonType.primary,
+                        size: ModernButtonSize.large,
+                        icon: Icons.add,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const AddHabitScreen()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               );
             }

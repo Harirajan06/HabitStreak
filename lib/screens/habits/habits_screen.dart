@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
+// import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../providers/habit_provider.dart';
 import '../../models/habit.dart';
@@ -62,16 +62,7 @@ class _HabitsScreenState extends State<HabitsScreen>
         title: Row(
           children: [
             const SizedBox(width: 16),
-            SizedBox(
-              height: 40,
-              width: 40,
-              child: Lottie.asset(
-                'assets/animations/Flame animation(1).json',
-                repeat: true,
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(width: 8),
+// Removed Lottie animation
             RichText(
               text: TextSpan(
                 style: theme.textTheme.headlineSmall?.copyWith(
