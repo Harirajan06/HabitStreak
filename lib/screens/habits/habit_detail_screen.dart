@@ -198,22 +198,25 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             width: double.infinity,
-            child: ModernButton(
-              text: isComplete ? 'Completed Today' : 'Mark Complete',
-              icon: isComplete ? Icons.check : Icons.flash_on,
-              customColor: isComplete ? Colors.green : latestHabit.color,
-              fullWidth: true,
-              size: ModernButtonSize.large,
-              onPressed: isComplete
-                  ? null
-                  : () async {
-                      await habitProvider.toggleHabitCompletion(
-                        latestHabit.id,
-                        context,
-                        isPremium,
-                      );
-                      if (mounted) setState(() {}); // Refresh UI
-                    },
+            child: IgnorePointer(
+              ignoring: isComplete,
+              child: ModernButton(
+                text: isComplete ? 'Completed Today' : 'Mark Complete',
+                icon: isComplete ? Icons.check : Icons.flash_on,
+                customColor: latestHabit.color,
+                fullWidth: true,
+                size: ModernButtonSize.large,
+                onPressed: isComplete
+                    ? () {}
+                    : () async {
+                        await habitProvider.toggleHabitCompletion(
+                          latestHabit.id,
+                          context,
+                          isPremium,
+                        );
+                        if (mounted) setState(() {}); // Refresh UI
+                      },
+              ),
             ),
           );
         },

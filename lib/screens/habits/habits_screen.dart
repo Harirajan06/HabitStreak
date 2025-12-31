@@ -57,8 +57,6 @@ class _HabitsScreenState extends State<HabitsScreen>
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor:
-            theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
         elevation: 0,
         titleSpacing: 0,
         title: Row(

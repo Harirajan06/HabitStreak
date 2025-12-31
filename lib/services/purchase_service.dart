@@ -143,4 +143,14 @@ class PurchaseService {
     // Notify listeners via stream
     _subscriptionStatusController.add(isPremium);
   }
+
+  Future<bool> isPro() async {
+    try {
+      CustomerInfo customerInfo = await Purchases.getCustomerInfo();
+      return customerInfo.entitlements.all[_entitlementId]?.isActive ?? false;
+    } catch (e) {
+      debugPrint('Error checking isPro: $e');
+      return false;
+    }
+  }
 }

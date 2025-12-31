@@ -12,6 +12,10 @@ import '../providers/habit_provider.dart';
 import '../widgets/premium_lock_dialog.dart';
 import '../services/navigation_service.dart';
 import '../mixins/widget_logic_mixin.dart';
+import 'mood/mood_entry_screen.dart';
+import '../providers/mood_provider.dart';
+import '../providers/note_provider.dart';
+import '../models/note.dart';
 
 /// MainNavigationScreen provides persistent bottom navigation for the grid view mode
 /// This ensures all screens maintain the navigation bar when accessed from grid view
@@ -108,6 +112,59 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const AddNoteScreen()),
               );
+            } else if (_currentIndex == 2) {
+              // Mood Tab - Add Mood
+              final moodProvider =
+                  Provider.of<MoodProvider>(context, listen: false);
+              final now = DateTime.now();
+              final today = DateTime(now.year, now.month, now.day);
+
+              Navigator.of(context)
+                  .push(
+                MaterialPageRoute(
+                  builder: (_) => MoodEntryScreen(
+                    selectedDate: today,
+                  ),
+                ),
+              )
+                  .then((result) async {
+                if (result != null && result is Map) {
+                  await moodProvider.saveMood(
+                    date: today,
+                    emoji: result['emoji'],
+                    label: result['label'],
+                    tags: (result['tags'] as List<dynamic>).cast<String>(),
+                    notes: result['notes'],
+                    score: result['score'] ?? 0,
+                  );
+
+                  // Sync Note
+                  if (result['notes'] != null &&
+                      result['notes'].toString().isNotEmpty) {
+                    try {
+                      if (!context.mounted) return;
+                      final noteProvider =
+                          Provider.of<NoteProvider>(context, listen: false);
+                      final dateKey =
+                          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+                      final newNote = Note(
+                        id: 'mood_$dateKey',
+                        title: 'Mood: ${result['label']} ${result['emoji']}',
+                        content: result['notes'],
+                        createdAt: today,
+                        updatedAt: DateTime.now(),
+                        tags: [
+                          'Mood',
+                          ...(result['tags'] as List<dynamic>).cast<String>()
+                        ],
+                      );
+                      await noteProvider.addNote(newNote);
+                    } catch (e) {
+                      debugPrint('Error syncing mood note: $e');
+                    }
+                  }
+                }
+              });
             } else {
               // Other Tabs - Add Habit
               final authProvider =
@@ -131,7 +188,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
           backgroundColor: Colors.transparent,
           elevation: 0,
           child: Icon(
-            _currentIndex == 3 ? Icons.note_add : Icons.add,
+            _currentIndex == 3
+                ? Icons.note_add
+                : (_currentIndex == 2 ? Icons.mood : Icons.add),
             color: Colors.white,
             size: 28,
           ),

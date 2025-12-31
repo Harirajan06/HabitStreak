@@ -34,43 +34,10 @@ void main() async {
     debugPrint('⚠️ Hive initialization failed: $e');
   }
 
-  // Initialize notifications (channels, timezone, schedule saved reminders)
-  try {
-    await initializeNotificationService();
-    debugPrint('✅ Notifications initialized (or skipped on failure)');
-  } catch (e) {
-    debugPrint('⚠️ Notification initializer failed: $e');
-  }
-
-  // Initialize Google Mobile Ads (safe mode)
-  try {
-    await MobileAds.instance.initialize();
-    debugPrint('✅ MobileAds initialized');
-  } catch (e) {
-    debugPrint('⚠️ Ads unavailable: $e');
-  }
-
-  // Initialize purchase service (in-app purchases) and attempt restore
-  try {
-    await PurchaseService.instance.init();
-    // Attempt automatic restore so users retain entitlements after reinstall
-    await PurchaseService.instance.restorePurchases();
-    debugPrint('✅ PurchaseService initialized and restore attempted');
-  } catch (e) {
-    debugPrint('⚠️ Purchase service unavailable: $e');
-  }
-
-  // Initialize Auto Backup Service
-  try {
-    // No explicit init needed currently as it uses Hive lazily,
-    // but good practice to have the method if we expand.
-    await AutoBackupService.instance.init();
-    // Perform initial check on startup
-    await AutoBackupService.instance.performBackupIfNeeded();
-    debugPrint('✅ AutoBackupService initialized');
-  } catch (e) {
-    debugPrint('⚠️ AutoBackupService failed: $e');
-  }
+  // 🚀 OPTIMIZATION: Move heavy initializations to background to speed up launch.
+  // We only await Hive (local DB) because the UI needs it immediately.
+  // Everything else (Network, Ads, Purchases) loads in parallel.
+  _initBackgroundServices();
 
   // Prevent Flutter-specific non-fatal framework crashes (DevicePreview)
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -108,6 +75,44 @@ void main() async {
   );
 }
 
+Future<void> _initBackgroundServices() async {
+  debugPrint('🚀 Starting background services initialization...');
+
+  // 1. Notifications (Local - relatively fast but better deferred)
+  try {
+    await initializeNotificationService();
+    debugPrint('✅ Notifications initialized');
+  } catch (e) {
+    debugPrint('⚠️ Notification initializer failed: $e');
+  }
+
+  // 2. Mobile Ads (Verified slow - network)
+  try {
+    await MobileAds.instance.initialize();
+    debugPrint('✅ MobileAds initialized');
+  } catch (e) {
+    debugPrint('⚠️ Ads unavailable: $e');
+  }
+
+  // 3. Purchases (Verified slow - network)
+  try {
+    await PurchaseService.instance.init();
+    await PurchaseService.instance.restorePurchases();
+    debugPrint('✅ PurchaseService initialized');
+  } catch (e) {
+    debugPrint('⚠️ Purchase service unavailable: $e');
+  }
+
+  // 4. Auto Backup (Background task)
+  try {
+    await AutoBackupService.instance.init();
+    await AutoBackupService.instance.performBackupIfNeeded();
+    debugPrint('✅ AutoBackupService initialized');
+  } catch (e) {
+    debugPrint('⚠️ AutoBackupService failed: $e');
+  }
+}
+
 class StreaklyApp extends StatelessWidget {
   final bool pinRequired;
   const StreaklyApp({super.key, this.pinRequired = false});
@@ -139,6 +144,8 @@ class StreaklyApp extends StatelessWidget {
             appBarTheme: AppBarTheme(
               centerTitle: true,
               elevation: 0,
+              scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
               backgroundColor: Colors.white,
               titleTextStyle: GoogleFonts.inter(
                 fontSize: 20,
@@ -199,6 +206,8 @@ class StreaklyApp extends StatelessWidget {
             appBarTheme: AppBarTheme(
               centerTitle: true,
               elevation: 0,
+              scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
               backgroundColor: const Color(0xFF15171f), // #15171f
               titleTextStyle: GoogleFonts.inter(
                 fontSize: 20,

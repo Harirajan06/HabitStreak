@@ -37,8 +37,6 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor:
-            theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
         elevation: 0,
         titleSpacing: 0,
         automaticallyImplyLeading: false,
@@ -48,8 +46,9 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
             SizedBox(
               height: 40,
               width: 40,
-              child: Image.asset(
-                'assets/splash/splash.png',
+              child: Lottie.asset(
+                'assets/animations/Flame animation(1).json',
+                repeat: true,
                 fit: BoxFit.contain,
               ),
             ),
