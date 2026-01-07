@@ -27,11 +27,18 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     if (mounted) {
       if (offerings?.current != null &&
           offerings!.current!.availablePackages.isNotEmpty) {
-        // Default to annual if available, else first
-        final annual = offerings.current!.availablePackages.firstWhere(
-            (p) => p.packageType == PackageType.annual,
-            orElse: () => offerings.current!.availablePackages.first);
-        _selectedPackage = annual;
+        // Prefer default selection order: Monthly, 3 Month, 6 Month, Yearly
+        final packages = offerings.current!.availablePackages;
+        final preferred = packages.firstWhere(
+            (p) => p.packageType == PackageType.monthly,
+            orElse: () => packages.firstWhere(
+                (p) => p.packageType == PackageType.threeMonth,
+                orElse: () => packages.firstWhere(
+                    (p) => p.packageType == PackageType.sixMonth,
+                    orElse: () => packages.firstWhere(
+                        (p) => p.packageType == PackageType.annual,
+                        orElse: () => packages.first))));
+        _selectedPackage = preferred;
       }
       setState(() {
         _offerings = offerings;
@@ -222,7 +229,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                           const SizedBox(height: 16),
                           ...features
                               .map((f) => _buildFeatureItem(f, isDark))
-                              .toList(),
+                              ,
                         ],
                       ),
                     ),
@@ -432,14 +439,14 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
   String _getPlanTitle(Package package) {
     switch (package.packageType) {
-      case PackageType.annual:
-        return 'Annual';
-      case PackageType.sixMonth:
-        return '6 Months';
-      case PackageType.threeMonth:
-        return '3 Months';
       case PackageType.monthly:
         return 'Monthly';
+      case PackageType.threeMonth:
+        return '3 Month';
+      case PackageType.sixMonth:
+        return '6 Month';
+      case PackageType.annual:
+        return 'Yearly';
       case PackageType.lifetime:
         return 'Lifetime';
       case PackageType.weekly:

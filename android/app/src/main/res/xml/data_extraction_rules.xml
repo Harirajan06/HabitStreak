@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <!-- Cloud backup rules for Android 12+ (API 31+) -->
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <!-- Include all app files (Hive databases containing user habits, notes, etc.) -->
+        <include domain="file" path="." />
+        
+        <!-- Include shared preferences (app settings, user preferences) -->
+        <include domain="sharedpref" path="." />
+        
+        <!-- Exclude cache directories (temporary files) -->
+        <exclude domain="file" path="cache/" />
+        <exclude domain="file" path="code_cache/" />
+        
+        <!-- Exclude sensitive data: Flutter Secure Storage (PIN hashes, biometric data) -->
+        <exclude domain="file" path="flutter_secure_storage/" />
+        
+        <!-- Exclude device-specific widget preferences -->
+        <exclude domain="sharedpref" path="habit_widget_prefs.xml" />
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+        
+        <!-- Exclude RevenueCat device-specific purchase data -->
+        <exclude domain="sharedpref" path="com.revenuecat.purchases.xml" />
+        
+        <!-- Exclude notification-related device-specific data -->
+        <exclude domain="sharedpref" path="flutter_local_notifications_plugin.xml" />
+    </cloud-backup>
+    
+    <!-- Device-to-device transfer rules -->
+    <device-transfer>
+        <!-- Include all app files for device transfers -->
+        <include domain="file" path="." />
+        
+        <!-- Include shared preferences -->
+        <include domain="sharedpref" path="." />
+        
+        <!-- Exclude cache directories -->
+        <exclude domain="file" path="cache/" />
+        <exclude domain="file" path="code_cache/" />
+        
+        <!-- Exclude sensitive authentication data even in device transfers -->
+        <exclude domain="file" path="flutter_secure_storage/" />
+        
+        <!-- Exclude device-specific configurations -->
+        <exclude domain="sharedpref" path="habit_widget_prefs.xml" />
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+        
+        <!-- Allow RevenueCat data in device transfers but exclude notifications -->
+        <exclude domain="sharedpref" path="flutter_local_notifications_plugin.xml" />
+    </device-transfer>
+</data-extraction-rules>

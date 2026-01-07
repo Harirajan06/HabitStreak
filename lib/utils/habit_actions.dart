@@ -6,6 +6,7 @@ import '../models/habit.dart';
 import '../providers/auth_provider.dart';
 import '../providers/habit_provider.dart';
 import '../services/toast_service.dart';
+import '../screens/wrapped/habit_summary_screen.dart';
 
 class HabitActions {
   static void showHabitOptionsMenu(BuildContext context, Habit habit) {
@@ -82,6 +83,26 @@ class HabitActions {
                 onTap: () {
                   Navigator.pop(context);
                   _showDeleteConfirmationDialog(context, habit);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.ios_share,
+                    color: Colors.green,
+                  ),
+                ),
+                title: const Text('Share Summary'),
+                subtitle: const Text('Generate and share a summary image for this habit'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _openShareSummaryScreen(context, habit);
                 },
               ),
               const SizedBox(height: 20),
@@ -170,6 +191,14 @@ class HabitActions {
             child: const Text('Close'),
           ),
         ],
+      ),
+    );
+  }
+
+  static void _openShareSummaryScreen(BuildContext context, Habit habit) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => HabitSummaryScreen(habit: habit),
       ),
     );
   }

@@ -31,12 +31,15 @@ class HabitDetailScreen extends StatefulWidget {
 class _HabitDetailScreenState extends State<HabitDetailScreen> {
   List<Note> _recentNotes = [];
   bool _isLoadingNotes = true;
+  late PageController _notesPageController;
+  int _currentNotePage = 0;
   DateTime _focusedDay = DateTime.now();
   final CalendarFormat _calendarFormat = CalendarFormat.month;
 
   @override
   void initState() {
     super.initState();
+    _notesPageController = PageController(initialPage: 0);
     _loadNotes();
   }
 
@@ -45,10 +48,23 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     final notes = await noteProvider.getNotesForHabit(widget.habit.id);
     if (mounted) {
       setState(() {
-        _recentNotes = notes.take(3).toList(); // Show last 3 notes
+        // Ensure newest notes appear first
+        notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        _recentNotes = notes.take(3).toList(); // Show last 3 notes (newest-first)
         _isLoadingNotes = false;
+        _currentNotePage = 0;
+        // Reset page to newest
+        try {
+          _notesPageController.jumpToPage(0);
+        } catch (_) {}
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _notesPageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -540,10 +556,23 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
       );
     }
 
+    // Show notes in a horizontal PageView (newest first). Allow swiping
     return Column(
-      children: _recentNotes
-          .map((note) => Container(
-                margin: const EdgeInsets.only(bottom: 12),
+      children: [
+        SizedBox(
+          height: 140,
+          child: PageView.builder(
+            controller: _notesPageController,
+            itemCount: _recentNotes.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentNotePage = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final note = _recentNotes[index];
+              return Container(
+                margin: const EdgeInsets.only(right: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: theme.cardColor,
@@ -583,14 +612,36 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.7),
                           ),
-                          maxLines: 2,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                   ],
                 ),
-              ))
-          .toList(),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Dots indicator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(_recentNotes.length, (i) {
+            final active = i == _currentNotePage;
+            return Container(
+              width: active ? 10 : 6,
+              height: 6,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: active
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 

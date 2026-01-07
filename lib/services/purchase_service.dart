@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
+import 'package:hive/hive.dart';
 import '../services/hive_service.dart';
 
 class PurchaseService {
@@ -40,7 +41,8 @@ class PurchaseService {
       _subscriptionStatusController.stream;
 
   // CONFIGURATION
-  static const _apiKey = 'test_UJOGBiKtFpwTBReIuyUejnhRbog';
+  // RevenueCat API key (set from user input)
+  static const _apiKey = 'test_cafUGSoLzloRwcCwdfxeiTTnZuq';
   static const _entitlementId = 'Habit Sensai Pro';
 
   bool _isInitialized = false;
@@ -130,18 +132,84 @@ class PurchaseService {
   }
 
   Future<void> _updatePremiumStatus(CustomerInfo customerInfo) async {
-    final bool isPremium =
-        customerInfo.entitlements.all[_entitlementId]?.isActive ?? false;
+    // Determine whether the configured entitlement is active.
+    // We attempt a tolerant match in case the entitlement identifier
+    // in RevenueCat differs by whitespace/casing (e.g. 'HabitSensai Pro').
+    final allEntitlementKeys =
+        customerInfo.entitlements.all.keys.map((k) => k).toList();
+    final activeEntitlementKeys =
+        customerInfo.entitlements.active.keys.map((k) => k).toList();
 
-    debugPrint(
-        'Updating Premium Status (EncTitl: $_entitlementId): $isPremium');
+    // Normalization helper: lowercase and remove non-alphanumerics
+    String normalize(String s) =>
+      s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
 
+    final normTarget = normalize(_entitlementId);
+
+    String? matchedKey;
+    // 1) Exact lookup first
+    if (customerInfo.entitlements.all.containsKey(_entitlementId)) {
+      matchedKey = _entitlementId;
+    } else {
+      // 2) Try tolerant match across all entitlement keys
+      for (final k in allEntitlementKeys) {
+        if (normalize(k) == normTarget) {
+          matchedKey = k;
+          break;
+        }
+      }
+    }
+
+    final bool isPremium = matchedKey != null
+        ? (customerInfo.entitlements.all[matchedKey]?.isActive ?? false)
+        : false;
+
+    // Debug: list all entitlements and active ones for troubleshooting
+    debugPrint('Updating Premium Status (Configured entitlement: $_entitlementId)');
+    debugPrint(' - Normalized configured entitlement: $normTarget');
+    debugPrint(' - All entitlements: $allEntitlementKeys');
+    debugPrint(' - Active entitlements: $activeEntitlementKeys');
+    debugPrint(' - Matched entitlement key: ${matchedKey ?? 'none'}');
+    debugPrint(' - Computed isPremium: $isPremium');
+
+    // Persist a short snapshot into purchases_box for local inspection
+    try {
+      final box = Hive.box('purchases_box');
+      await box.put('last_entitlements', {
+        'active': activeEntitlementKeys,
+        'all': allEntitlementKeys,
+        'checkedAt': DateTime.now().toIso8601String(),
+        'entitlementChecked': _entitlementId,
+      });
+    } catch (e) {
+      debugPrint('Failed to write purchases_box snapshot: $e');
+    }
+
+    // Write to settings (used by PremiumService/AuthProvider)
     final settings = HiveService.instance.getSettings();
     settings['isPremium'] = isPremium;
     await HiveService.instance.setSettings(settings);
 
     // Notify listeners via stream
     _subscriptionStatusController.add(isPremium);
+  }
+
+  /// Debug helper: fetch current CustomerInfo and log entitlements
+  Future<Map<String, dynamic>> dumpCustomerInfo() async {
+    try {
+      final info = await Purchases.getCustomerInfo();
+      final active = info.entitlements.active.keys.toList();
+      final all = info.entitlements.all.keys.toList();
+      debugPrint('dumpCustomerInfo - active: $active all: $all');
+      return {
+        'active': active,
+        'all': all,
+        'appUserId': await Purchases.appUserID,
+      };
+    } catch (e) {
+      debugPrint('dumpCustomerInfo failed: $e');
+      return {'error': e.toString()};
+    }
   }
 
   Future<bool> isPro() async {
@@ -151,6 +219,40 @@ class PurchaseService {
     } catch (e) {
       debugPrint('Error checking isPro: $e');
       return false;
+    }
+  }
+
+  /// Identify RevenueCat with a stable app user id (recommended on login)
+  Future<void> identify(String userId) async {
+    try {
+      debugPrint('PurchaseService: Logging in RevenueCat with userId: $userId');
+      // Use logIn to associate the app user id with RevenueCat
+      try {
+        await Purchases.logIn(userId);
+      } catch (e) {
+        debugPrint('Purchases.logIn failed: $e');
+      }
+      // Refresh customer info after login
+      final info = await Purchases.getCustomerInfo();
+      _updatePremiumStatus(info);
+    } catch (e) {
+      debugPrint('PurchaseService.identify failed: $e');
+    }
+  }
+
+  /// Reset RevenueCat to anonymous user (use on logout)
+  Future<void> reset() async {
+    try {
+      debugPrint('PurchaseService: logging out RevenueCat (anonymous)');
+      try {
+        await Purchases.logOut();
+      } catch (e) {
+        debugPrint('Purchases.logOut failed: $e');
+      }
+      final info = await Purchases.getCustomerInfo();
+      _updatePremiumStatus(info);
+    } catch (e) {
+      debugPrint('PurchaseService.reset failed: $e');
     }
   }
 }

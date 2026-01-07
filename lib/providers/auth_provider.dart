@@ -98,6 +98,13 @@ class AuthProvider with ChangeNotifier {
                   'AuthProvider: Failed to sync user premium status: $e');
             }
           }
+          // Ensure RevenueCat is identified with this user's id so purchases
+          // persist across reinstalls when the same user id is reused.
+          try {
+            await PurchaseService.instance.identify(currentUserId);
+          } catch (e) {
+            debugPrint('AuthProvider: identify failed: $e');
+          }
         }
       }
 
@@ -132,6 +139,12 @@ class AuthProvider with ChangeNotifier {
     _currentUser = user;
     _isAuthenticated = true;
     _admobService.loadInterstitialAd(isPremium: false);
+    // Identify RevenueCat with guest id so purchases (if any) attach to this id.
+    try {
+      await PurchaseService.instance.identify(id);
+    } catch (e) {
+      debugPrint('AuthProvider: identify after guest create failed: $e');
+    }
   }
 
   // PIN & Biometric support (secure storage)
@@ -257,6 +270,12 @@ class AuthProvider with ChangeNotifier {
         settings['currentUserId'] = match.id;
         await HiveService.instance.setSettings(settings);
         _admobService.loadInterstitialAd(isPremium: match.premium);
+        // Identify RevenueCat to ensure this user's purchases are associated
+        try {
+          await PurchaseService.instance.identify(match.id);
+        } catch (e) {
+          debugPrint('AuthProvider: identify after login failed: $e');
+        }
         return true;
       }
 
@@ -295,6 +314,12 @@ class AuthProvider with ChangeNotifier {
       settings['currentUserId'] = id;
       await HiveService.instance.setSettings(settings);
       _admobService.loadInterstitialAd(isPremium: false);
+      // Identify RevenueCat with the new registered user id
+      try {
+        await PurchaseService.instance.identify(id);
+      } catch (e) {
+        debugPrint('AuthProvider: identify after register failed: $e');
+      }
       return true;
     } catch (e) {
       _errorMessage = 'Registration failed: $e';
@@ -360,6 +385,13 @@ class AuthProvider with ChangeNotifier {
       _currentUser = null;
       _isAuthenticated = false;
       _admobService.loadInterstitialAd(isPremium: false);
+      // Reset RevenueCat to anonymous user on logout to avoid tying
+      // subsequent actions to the previous user id.
+      try {
+        await PurchaseService.instance.reset();
+      } catch (e) {
+        debugPrint('AuthProvider: PurchaseService.reset failed: $e');
+      }
     } catch (e) {
       _errorMessage = 'Logout failed: $e';
     } finally {

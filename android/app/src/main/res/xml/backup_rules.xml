@@ -6,9 +6,20 @@
     <!-- Include shared preferences -->
     <include domain="sharedpref" path="." />
     
-    <!-- Exclude cache directory (temporary files) -->
+    <!-- Exclude cache directories (temporary files) -->
     <exclude domain="file" path="cache/" />
-    
-    <!-- Exclude code cache -->
     <exclude domain="file" path="code_cache/" />
+    
+    <!-- Exclude sensitive data: Flutter Secure Storage -->
+    <exclude domain="file" path="flutter_secure_storage/" />
+    
+    <!-- Exclude device-specific widget preferences -->
+    <exclude domain="sharedpref" path="habit_widget_prefs.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+    
+    <!-- Exclude any RevenueCat device-specific data -->
+    <exclude domain="sharedpref" path="com.revenuecat.purchases.xml" />
+    
+    <!-- Exclude notification-related device-specific data -->
+    <exclude domain="sharedpref" path="flutter_local_notifications_plugin.xml" />
 </full-backup-content>

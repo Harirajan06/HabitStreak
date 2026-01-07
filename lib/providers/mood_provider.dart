@@ -23,7 +23,15 @@ class MoodProvider extends ChangeNotifier {
   }
 
   Future<void> loadMoods() async {
-    if (_moodBox == null) return;
+    // Ensure box is open (lazy open if needed)
+    if (_moodBox == null) {
+      try {
+        _moodBox = await Hive.openBox(_boxName);
+      } catch (e) {
+        debugPrint('Error opening moods box: $e');
+        return;
+      }
+    }
 
     try {
       _moods = {};
@@ -59,7 +67,15 @@ class MoodProvider extends ChangeNotifier {
     required String notes,
     int score = 0,
   }) async {
-    if (_moodBox == null) return;
+    // Ensure box is open (lazy open if needed)
+    if (_moodBox == null) {
+      try {
+        _moodBox = await Hive.openBox(_boxName);
+      } catch (e) {
+        debugPrint('Error opening moods box before save: $e');
+        return;
+      }
+    }
 
     try {
       final dateKey = _getDateKey(date);
@@ -84,7 +100,15 @@ class MoodProvider extends ChangeNotifier {
   }
 
   Future<void> deleteMood(DateTime date) async {
-    if (_moodBox == null) return;
+    // Ensure box is open (lazy open if needed)
+    if (_moodBox == null) {
+      try {
+        _moodBox = await Hive.openBox(_boxName);
+      } catch (e) {
+        debugPrint('Error opening moods box before delete: $e');
+        return;
+      }
+    }
 
     try {
       final dateKey = _getDateKey(date);

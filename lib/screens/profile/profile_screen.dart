@@ -13,6 +13,7 @@ import '../../providers/note_provider.dart';
 import '../../providers/theme_provider.dart'; // Import ThemeProvider
 import '../../models/habit.dart';
 import '../../services/export_import_service.dart';
+import '../wrapped/yearly_wrapped_screen.dart';
 
 import '../auth/splash_screen.dart';
 
@@ -494,6 +495,22 @@ class ProfileScreen extends StatelessWidget {
           [
             _buildMenuItem(
               context,
+              title: 'Yearly Summary',
+              subtitle: 'Create a shareable year summary for selected habits',
+              icon: Icons.calendar_month,
+              iconColor: Colors.deepPurpleAccent,
+              onTap: () {
+                _showYearlySummaryDialog(context);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildMenuCard(
+          context,
+          [
+            _buildMenuItem(
+              context,
               title: 'Help & Support',
               subtitle: 'Get help and contact support',
               icon: Icons.help_outline,
@@ -555,6 +572,239 @@ class ProfileScreen extends StatelessWidget {
         const SizedBox(height: 16),
       ],
     );
+  }
+
+  void _showYearlySummaryDialog(BuildContext context) async {
+    final theme = Theme.of(context);
+    final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+    final habits = habitProvider.activeHabits;
+    final selected = <String>[];
+
+    final result = await showModalBottomSheet<List<String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(builder: (context, setState) {
+          String _initial(String name) {
+            if (name.isEmpty) return '?';
+            final trimmed = name.trim();
+            if (trimmed.isEmpty) return '?';
+            return trimmed.substring(0, 1).toUpperCase();
+          }
+
+          void _toggle(String id) {
+            setState(() {
+              if (selected.contains(id)) {
+                selected.remove(id);
+              } else if (selected.length < 5) {
+                selected.add(id);
+              }
+            });
+          }
+
+          final maxHeight = MediaQuery.of(context).size.height * 0.75;
+
+          return SafeArea(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withOpacity(0.12),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.shadow.withOpacity(0.12),
+                    blurRadius: 14,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxHeight),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      height: 5,
+                      width: 46,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurface.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Yearly Summary',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Pick up to 5 habits to include in your wrap.',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.07),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withOpacity(0.16),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.info_outline,
+                              size: 18,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              '${selected.length} of 5 selected',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.separated(
+                        itemCount: habits.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final h = habits[index];
+                          final id = h.id;
+                          final isSelected = selected.contains(id);
+
+                          return InkWell(
+                            onTap: () => _toggle(id),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? theme.colorScheme.primary.withOpacity(0.08)
+                                    : theme.colorScheme.onSurface.withOpacity(0.03),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.outline.withOpacity(0.2),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 18,
+                                    backgroundColor:
+                                        theme.colorScheme.primary.withOpacity(0.15),
+                                    child: Text(
+                                      _initial(h.name),
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      h.name,
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        color: theme.colorScheme.onSurface,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    isSelected
+                                        ? Icons.check_circle
+                                        : Icons.radio_button_unchecked,
+                                    color: isSelected
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurface.withOpacity(0.4),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: selected.isEmpty
+                                ? null
+                                : () {
+                                    Navigator.of(context).pop(selected);
+                                  },
+                            icon: const Icon(Icons.ios_share),
+                            label: const Text('Summary'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
+      },
+    );
+
+    if (result != null && result.isNotEmpty) {
+      // Navigate to YearlyWrappedScreen with selected habits
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => YearlyWrappedScreen(initialSelectedIds: result)));
+    }
   }
 
   Widget _buildMenuCard(BuildContext context, List<Widget> children) {

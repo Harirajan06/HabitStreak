@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/admob_service.dart';
+import '../../services/hive_service.dart';
 import '../../services/navigation_service.dart';
 import '../main_navigation_screen.dart';
 import 'onboarding_screen.dart';
@@ -58,6 +59,18 @@ class _SplashScreenState extends State<SplashScreen>
       final prefs = await SharedPreferences.getInstance();
       // Temporarily force onboarding to show for debugging/verification
       final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+      // Debug logging to help diagnose onboarding flow on fresh installs
+      debugPrint('DEBUG: has_seen_onboarding = $hasSeenOnboarding');
+
+      // Determine if this appears to be a fresh install (no user data)
+      bool hasHabits = false;
+      try {
+        final habits = HiveService.instance.getHabits();
+        hasHabits = habits.isNotEmpty;
+      } catch (e) {
+        debugPrint('DEBUG: error checking habits in HiveService: $e');
+      }
+      debugPrint('DEBUG: hasHabits = $hasHabits');
 
       // Initialize saved view mode preference
       try {
@@ -83,7 +96,10 @@ class _SplashScreenState extends State<SplashScreen>
 
       if (!mounted) return;
 
-      if (!hasSeenOnboarding) {
+      // Show onboarding if the user hasn't seen it, or if there is no user data (fresh install)
+      final shouldShowOnboarding = !hasSeenOnboarding || !hasHabits;
+
+      if (shouldShowOnboarding) {
         if (!mounted) return;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const OnboardingScreen()),
