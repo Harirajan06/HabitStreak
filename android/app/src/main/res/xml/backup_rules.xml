@@ -2,6 +2,7 @@
 <full-backup-content>
     <!-- Include all app files (Hive databases are stored here) -->
     <include domain="file" path="." />
+    <include domain="root" path="app_flutter" />
     
     <!-- Include shared preferences -->
     <include domain="sharedpref" path="." />

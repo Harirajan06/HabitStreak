@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
     <!-- Cloud backup rules for Android 12+ (API 31+) -->
-    <cloud-backup disableIfNoEncryptionCapabilities="true">
+    <cloud-backup disableIfNoEncryptionCapabilities="false">
         <!-- Include all app files (Hive databases containing user habits, notes, etc.) -->
         <include domain="file" path="." />
+        <include domain="root" path="app_flutter" />
         
         <!-- Include shared preferences (app settings, user preferences) -->
         <include domain="sharedpref" path="." />

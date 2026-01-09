@@ -37,13 +37,37 @@ android:dataExtractionRules="@xml/data_extraction_rules"
 
 ### 2. **backup_rules.xml (Android 11 and lower)**
 Enhanced with proper exclusions for sensitive data while maintaining compatibility.
+**Crucial Fix**: Includes `app_flutter` directory explicitly to cover Hive boxes.
 
 ### 3. **data_extraction_rules.xml (Android 12+)**
 Separate rules for cloud backup vs device-to-device transfer:
-- **Cloud Backup**: More restrictive, requires encryption capabilities
+- **Cloud Backup**: More restrictive, requires encryption capabilities (set to `false` for testing convenience, enable for production if strict data security is required).
 - **Device Transfer**: Slightly more permissive for device migrations
+**Crucial Fix**: Includes `app_flutter` directory explicitly to cover Hive boxes.
+
+## 🧪 Latest Validation Results (2026-01-09)
+
+### ✅ **Validation #1**
+- **Device**: Vivo Y39 5G (Android 15)
+- **Status**: **PASSED**
+- **Scenario**: Full backup and restore using `bmgr`.
+- **Outcome**: 
+  - All habits, notes, and streak data successfully restored.
+  - User settings restored.
+  - App launched successfully without crashes.
+- **Key Configuration**:
+  - `data_extraction_rules.xml`: `disableIfNoEncryptionCapabilities="false"`
+  - Added `<include domain="root" path="app_flutter" />` to backup rules to capture Hive data which resides in `app_flutter` directory on Android.
 
 ## 🧪 Real-Time Testing Guide
+
+### 🛠 Semi-Automated Validation Script
+Run `./test_backup.sh` to walk through backup, restore, and manual verification. The script now:
+- Captures device model, Android version, selected backup transport, and command output.
+- Stores a markdown report under `backup_validation_results/backup_validation_<timestamp>.md` for compliance records.
+- Prompts you when manual actions are required (creating sample data, confirming restore quality).
+
+> Tip: run `chmod +x test_backup.sh` once if the script is not executable.
 
 ### Prerequisites
 1. **Two Android devices** (or emulators) running Android 6.0+
@@ -233,8 +257,8 @@ adb shell run-as com.harirajan.streakly cat files/backup_state
 ### Log Analysis:
 ```bash
 # Key logs to monitor
-adb logcat -s "BackupManagerService" | grep "streakly"
-adb logcat -s "RestoreEngine" | grep "streakly"
+adb logcat -s "BackupManagerService"
+adb logcat -s "RestoreEngine"
 ```
 
 ## 🎉 Success Metrics
