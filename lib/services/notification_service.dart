@@ -225,6 +225,12 @@ class NotificationService {
 
     final isCompleted = habit.isFullyCompletedToday();
 
+    if (isCompleted) {
+      debugPrint(
+          '🔕 Habit ${habit.id} is fully completed today; skipping reminder scheduling.');
+      return;
+    }
+
     for (int i = 0; i < habit.reminderTimes.length; i++) {
       final time = habit.reminderTimes[i];
       final id = _generateNotificationId(habit.id, i);
@@ -232,7 +238,7 @@ class NotificationService {
       final body = 'Time to complete your habit: ${habit.name}';
 
       await scheduleHabitReminder(id, title, body, time,
-          forceNextDay: isCompleted);
+          forceNextDay: false);
     }
   }
 
