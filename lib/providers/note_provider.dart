@@ -62,8 +62,6 @@ class NoteProvider with ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Failed to add note: $e';
       debugPrint('Error adding note: $e');
-      // Add locally as fallback
-      _notes.insert(0, note);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -71,23 +69,26 @@ class NoteProvider with ChangeNotifier {
   }
   
   Future<void> updateNote(Note note) async {
+    final index = _notes.indexWhere((n) => n.id == note.id);
+    final originalNote = index != -1 ? _notes[index] : null;
+
     try {
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
       
-      await HiveService.instance.updateNote(note);
-      final index = _notes.indexWhere((n) => n.id == note.id);
-      if (index != -1) {
-        _notes[index] = note;
+      if (index == -1) {
+        _errorMessage = 'Note not found';
+        return;
       }
+
+      await HiveService.instance.updateNote(note);
+      _notes[index] = note;
     } catch (e) {
       _errorMessage = 'Failed to update note: $e';
       debugPrint('Error updating note: $e');
-      // Update locally as fallback
-      final index = _notes.indexWhere((n) => n.id == note.id);
-      if (index != -1) {
-        _notes[index] = note;
+      if (index != -1 && originalNote != null) {
+        _notes[index] = originalNote;
       }
     } finally {
       _isLoading = false;
@@ -96,18 +97,27 @@ class NoteProvider with ChangeNotifier {
   }
   
   Future<void> deleteNote(String noteId) async {
+    final index = _notes.indexWhere((note) => note.id == noteId);
+    final noteToDelete = index != -1 ? _notes[index] : null;
+
     try {
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
       
       await HiveService.instance.deleteNote(noteId);
-      _notes.removeWhere((note) => note.id == noteId);
+      if (index != -1) {
+        _notes.removeAt(index);
+      }
     } catch (e) {
       _errorMessage = 'Failed to delete note: $e';
       debugPrint('Error deleting note: $e');
-      // Delete locally as fallback
-      _notes.removeWhere((note) => note.id == noteId);
+      if (noteToDelete != null &&
+          !_notes.any((note) => note.id == noteToDelete.id)) {
+        final insertIndex =
+            index >= 0 && index <= _notes.length ? index : _notes.length;
+        _notes.insert(insertIndex, noteToDelete);
+      }
     } finally {
       _isLoading = false;
       notifyListeners();

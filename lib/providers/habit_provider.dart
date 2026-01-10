@@ -149,7 +149,6 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
     } catch (e) {
       _errorMessage = 'Failed to add habit: $e';
       debugPrint('Error adding habit: $e');
-      _habits.add(habit);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -164,6 +163,9 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
   }
 
   Future<void> updateHabit(String id, Habit updatedHabit) async {
+    final index = _habits.indexWhere((habit) => habit.id == id);
+    final originalHabit = index != -1 ? _habits[index] : null;
+
     try {
       _isLoading = true;
       _errorMessage = null;
@@ -176,18 +178,19 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
         return;
       }
 
-      final index = _habits.indexWhere((habit) => habit.id == id);
-      if (index != -1) {
-        await HiveService.instance.updateHabit(updatedHabit);
-        _habits[index] = updatedHabit;
-        _widgetService.updateWidgetForHabit(updatedHabit,
-            isDarkMode: _isDarkMode);
+      if (index == -1) {
+        _errorMessage = 'Habit not found';
+        return;
       }
+
+      await HiveService.instance.updateHabit(updatedHabit);
+      _habits[index] = updatedHabit;
+      _widgetService.updateWidgetForHabit(updatedHabit,
+          isDarkMode: _isDarkMode);
     } catch (e) {
       _errorMessage = 'Failed to update habit: $e';
-      final index = _habits.indexWhere((habit) => habit.id == id);
-      if (index != -1) {
-        _habits[index] = updatedHabit;
+      if (index != -1 && originalHabit != null) {
+        _habits[index] = originalHabit;
       }
     } finally {
       _isLoading = false;
@@ -207,6 +210,10 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
 
   Future<void> deleteHabit(String id, {bool isPremium = false}) async {
     // Add isPremium parameter
+    final deletionIndex = _habits.indexWhere((habit) => habit.id == id);
+    final habitToDelete =
+        deletionIndex != -1 ? _habits[deletionIndex] : null;
+
     try {
       _isLoading = true;
       _errorMessage = null;
@@ -219,13 +226,22 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
       }
 
       await HiveService.instance.deleteHabit(id);
-      _habits.removeWhere((habit) => habit.id == id);
+      if (deletionIndex != -1) {
+        _habits.removeAt(deletionIndex);
+      }
       _widgetService.notifyHabitDeleted(id);
 
       _admobService.showInterstitialAd(isPremium: isPremium); // Show ad
     } catch (e) {
       _errorMessage = 'Failed to delete habit: $e';
-      _habits.removeWhere((habit) => habit.id == id);
+      if (habitToDelete != null &&
+          !_habits.any((habit) => habit.id == habitToDelete.id)) {
+        final insertIndex =
+            deletionIndex >= 0 && deletionIndex <= _habits.length
+                ? deletionIndex
+                : _habits.length;
+        _habits.insert(insertIndex, habitToDelete);
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -266,16 +282,22 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
       debugPrint(
           '✅ Habit "${habit.name}" updated to ($newCount/${habit.remindersPerDay})');
 
+      Habit updatedHabit;
       try {
-        await HiveService.instance.recordCompletion(id, today, count: newCount);
+        await HiveService.instance.recordCompletion(id, today,
+            count: newCount);
+        updatedHabit = habit.copyWith(
+          completedDates: completedDates,
+          dailyCompletions: newDailyCompletions,
+        );
       } catch (e) {
         _errorMessage = 'Failed to record completion: $e';
+        debugPrint('Error recording completion for $id: $e');
+        notifyListeners();
+        return;
       }
 
-      _habits[index] = habit.copyWith(
-        completedDates: completedDates,
-        dailyCompletions: newDailyCompletions,
-      );
+      _habits[index] = updatedHabit;
       _widgetService.updateWidgetForHabit(_habits[index],
           isDarkMode: _isDarkMode);
 
