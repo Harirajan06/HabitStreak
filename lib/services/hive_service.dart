@@ -11,6 +11,8 @@ class HiveService {
 
   HiveService._();
 
+  bool _initialized = false;
+
   late Box _habitsBox;
   late Box _notesBox;
   late Box _usersBox;
@@ -18,6 +20,10 @@ class HiveService {
   late Box _moodsBox;
 
   Future<void> init() async {
+    if (_initialized) {
+      return;
+    }
+
     await Hive.initFlutter();
 
     // Register adapters (simple JSON-backed adapters)
@@ -37,6 +43,7 @@ class HiveService {
     _moodsBox = await Hive.openBox('moods_box');
     // Open purchases box for local purchase records and entitlements
     await Hive.openBox('purchases_box');
+    _initialized = true;
   }
 
   // Habits

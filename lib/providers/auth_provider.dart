@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async'; // Added for StreamSubscription
 import 'dart:convert';
+import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:uuid/uuid.dart';
 import 'package:local_auth/local_auth.dart';
@@ -160,10 +161,19 @@ class AuthProvider with ChangeNotifier {
     return _bytesToHex(digest);
   }
 
+  List<int> _generateSalt(int length) {
+    try {
+      final rng = Random.secure();
+      return List<int>.generate(length, (_) => rng.nextInt(256));
+    } catch (_) {
+      final fallback = Random();
+      return List<int>.generate(length, (_) => fallback.nextInt(256));
+    }
+  }
+
   Future<bool> setPin(String pin, {int iterations = 10000}) async {
     try {
-      final salt = _bytesToHex(List<int>.generate(
-          16, (_) => DateTime.now().microsecondsSinceEpoch.remainder(256)));
+      final salt = _bytesToHex(_generateSalt(16));
       final hash = _iteratedHash(pin, salt, iterations);
       await _secureStorage.write(key: 'pin_salt', value: salt);
       await _secureStorage.write(key: 'pin_hash', value: hash);

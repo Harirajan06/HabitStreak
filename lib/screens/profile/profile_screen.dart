@@ -586,14 +586,14 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return StatefulBuilder(builder: (context, setState) {
-          String _initial(String name) {
+          String initial(String name) {
             if (name.isEmpty) return '?';
             final trimmed = name.trim();
             if (trimmed.isEmpty) return '?';
             return trimmed.substring(0, 1).toUpperCase();
           }
 
-          void _toggle(String id) {
+          void toggle(String id) {
             setState(() {
               if (selected.contains(id)) {
                 selected.remove(id);
@@ -712,7 +712,7 @@ class ProfileScreen extends StatelessWidget {
                           final isSelected = selected.contains(id);
 
                           return InkWell(
-                            onTap: () => _toggle(id),
+                            onTap: () => toggle(id),
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -734,7 +734,7 @@ class ProfileScreen extends StatelessWidget {
                                     backgroundColor:
                                         theme.colorScheme.primary.withOpacity(0.15),
                                     child: Text(
-                                      _initial(h.name),
+                                      initial(h.name),
                                       style: theme.textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.w700,
                                         color: theme.colorScheme.primary,

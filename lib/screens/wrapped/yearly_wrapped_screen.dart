@@ -8,7 +8,7 @@ import '../../services/export_service.dart';
 class YearlyWrappedScreen extends StatefulWidget {
   static const routeName = '/wrapped/yearly';
   final List<String>? initialSelectedIds;
-  const YearlyWrappedScreen({Key? key, this.initialSelectedIds}) : super(key: key);
+  const YearlyWrappedScreen({super.key, this.initialSelectedIds});
 
   @override
   State<YearlyWrappedScreen> createState() => _YearlyWrappedScreenState();
@@ -185,10 +185,10 @@ class _ShareOptionsSheet extends StatefulWidget {
   final bool initialDarkTheme;
   final Color initialBackdrop;
   const _ShareOptionsSheet({
-    Key? key,
+    super.key,
     required this.initialDarkTheme,
     required this.initialBackdrop,
-  }) : super(key: key);
+  });
 
   @override
   State<_ShareOptionsSheet> createState() => _ShareOptionsSheetState();
@@ -303,8 +303,7 @@ class _SelectHabitsSheet extends StatefulWidget {
   final List habits;
   final List<String> initialSelected;
   const _SelectHabitsSheet(
-      {Key? key, required this.habits, required this.initialSelected})
-      : super(key: key);
+      {super.key, required this.habits, required this.initialSelected});
 
   @override
   State<_SelectHabitsSheet> createState() => _SelectHabitsSheetState();

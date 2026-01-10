@@ -212,6 +212,12 @@ class HabitProvider with ChangeNotifier, WidgetsBindingObserver {
       _errorMessage = null;
       notifyListeners();
 
+      try {
+        await NotificationService().cancelHabitReminders(id);
+      } catch (e) {
+        debugPrint('Failed to cancel notifications for $id: $e');
+      }
+
       await HiveService.instance.deleteHabit(id);
       _habits.removeWhere((habit) => habit.id == id);
       _widgetService.notifyHabitDeleted(id);

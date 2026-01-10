@@ -231,8 +231,7 @@ class _HabitsScreenState extends State<HabitsScreen>
 
     return RefreshIndicator(
       onRefresh: () async {
-        // Refresh habits
-        await Future.delayed(const Duration(seconds: 1));
+        await _refreshHabits();
       },
       child: ListView.builder(
         padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),

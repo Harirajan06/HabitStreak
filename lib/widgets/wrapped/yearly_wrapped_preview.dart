@@ -10,13 +10,12 @@ class YearlyWrappedPreview extends StatelessWidget {
   final Color textColor;
 
   const YearlyWrappedPreview(
-      {Key? key,
+      {super.key,
       required this.habits,
       required this.backgroundColor,
       this.exportKey,
       this.width,
-      this.textColor = Colors.white})
-      : super(key: key);
+      this.textColor = Colors.white});
 
   @override
   Widget build(BuildContext context) {

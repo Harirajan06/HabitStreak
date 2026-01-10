@@ -198,6 +198,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       validReminders = List.from(_reminderTimes);
     }
 
+    final existingCompletedDates =
+        widget.habitToEdit?.completedDates ?? const <DateTime>[];
+    final existingDailyCompletions =
+        widget.habitToEdit?.dailyCompletions ?? const <String, int>{};
+
     final habit = Habit(
       id: habitId,
       name: _nameController.text.trim(),
@@ -208,10 +213,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       timeOfDay: HabitTimeOfDay.morning,
       habitType: _selectedHabitType,
       createdAt: widget.habitToEdit?.createdAt ?? DateTime.now(),
-      completedDates: widget.habitToEdit?.completedDates ?? [],
+      completedDates: List<DateTime>.from(existingCompletedDates),
       reminderTimes: validReminders,
       remindersPerDay: _remindersPerDay,
-      dailyCompletions: widget.habitToEdit?.dailyCompletions ?? {},
+      dailyCompletions: Map<String, int>.from(existingDailyCompletions),
     );
 
     // Re-evaluate completion status for today

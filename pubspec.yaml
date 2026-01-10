@@ -125,6 +125,12 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-SemiBold.ttf
+
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/animations/
@@ -169,12 +175,13 @@ flutter_launcher_icons:
     generate: true
   linux:
     generate: true
-  image_path: "assets/icon/AppIcon.png"
+  image_path: "assets/icon/AppIcon1.png"
   adaptive_icon_background: "#1a1a2e"
-  adaptive_icon_foreground: "assets/icon/AppIcon.png"
+  adaptive_icon_foreground: "assets/icon/AppIcon1.png"
 
 flutter_native_splash:
   color: "#ffffff"
   color_dark: "#000000"
+  image: "assets/icon/AppIcon1 Background Removed.png"
 
 

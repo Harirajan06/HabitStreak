@@ -6,7 +6,7 @@ import '../../widgets/wrapped/yearly_wrapped_preview.dart';
 
 class HabitSummaryScreen extends StatefulWidget {
   final Habit habit;
-  const HabitSummaryScreen({Key? key, required this.habit}) : super(key: key);
+  const HabitSummaryScreen({super.key, required this.habit});
 
   @override
   State<HabitSummaryScreen> createState() => _HabitSummaryScreenState();
@@ -151,10 +151,10 @@ class _ShareOptionsSheet extends StatefulWidget {
   final bool initialDarkTheme;
   final Color initialBackdrop;
   const _ShareOptionsSheet({
-    Key? key,
+    super.key,
     required this.initialDarkTheme,
     required this.initialBackdrop,
-  }) : super(key: key);
+  });
 
   @override
   State<_ShareOptionsSheet> createState() => _ShareOptionsSheetState();

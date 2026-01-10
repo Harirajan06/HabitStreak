@@ -7,6 +7,17 @@ set -e
 
 APP_PACKAGE="com.harirajan.streakly"
 BACKUP_TIMEOUT=30
+LOG_DIR="backup_validation_results"
+REPORT_FILE=""
+DEVICE_MODEL=""
+DEVICE_OS=""
+BACKUP_RESULT=""
+RESTORE_RESULT=""
+BACKUP_TRANSPORT=""
+BACKUPSET_LINE=""
+USER_VERIFICATION=""
+
+mkdir -p "$LOG_DIR"
 
 echo "🔧 Android Auto Backup Test Script for Streakly"
 echo "============================================="
@@ -23,7 +34,16 @@ if ! adb devices | grep -q "device$"; then
     exit 1
 fi
 
-echo "✅ Device connected: $(adb shell getprop ro.product.model)"
+DEVICE_MODEL=$(adb shell getprop ro.product.model | tr -d '\r')
+DEVICE_OS=$(adb shell getprop ro.build.version.release | tr -d '\r')
+echo "✅ Device connected: $DEVICE_MODEL (Android $DEVICE_OS)"
+
+collect_transport_info() {
+    BACKUP_TRANSPORT=$(adb shell bmgr list transports | awk '/\(selected\)/ {gsub(/\r/, ""); print $1}')
+    if [ -z "$BACKUP_TRANSPORT" ]; then
+        BACKUP_TRANSPORT="unknown"
+    fi
+}
 
 # Function to check if app is installed
 check_app_installed() {
@@ -46,7 +66,9 @@ backup_app() {
     
     # Trigger backup
     echo "🔄 Triggering backup..."
-    adb shell bmgr backupnow "$APP_PACKAGE"
+    BACKUP_RESULT=$(adb shell bmgr backupnow "$APP_PACKAGE" 2>&1)
+    echo "$BACKUP_RESULT"
+    collect_transport_info
     
     # Wait for backup to complete
     echo "⏳ Waiting for backup to complete..."
@@ -61,12 +83,14 @@ check_backup_status() {
     echo "🔍 Checking backup status..."
     
     # Check if backup exists
-    if adb shell bmgr list sets | grep -q "$APP_PACKAGE"; then
+    collect_transport_info
+    BACKUPSET_LINE=$(adb shell bmgr list sets | tr -d '\r' | grep "$APP_PACKAGE" || true)
+    if [ -n "$BACKUPSET_LINE" ]; then
         echo "✅ Backup found for $APP_PACKAGE"
         
         # Show backup details
         echo "📊 Backup details:"
-        adb shell bmgr list sets | grep "$APP_PACKAGE"
+        echo "$BACKUPSET_LINE"
     else
         echo "❌ No backup found for $APP_PACKAGE"
         return 1
@@ -99,7 +123,8 @@ clear_app_data() {
 restore_app() {
     echo ""
     echo "📥 Restoring app from backup..."
-    adb shell bmgr restore "$APP_PACKAGE"
+    RESTORE_RESULT=$(adb shell bmgr restore "$APP_PACKAGE" 2>&1)
+    echo "$RESTORE_RESULT"
     
     echo "⏳ Waiting for restore to complete..."
     sleep $BACKUP_TIMEOUT
@@ -122,11 +147,41 @@ verify_restore() {
     
     if [[ "$response" =~ ^[Yy]$ ]]; then
         echo "✅ Restore verification successful!"
+        USER_VERIFICATION="success"
         return 0
     else
         echo "❌ Restore verification failed!"
+        USER_VERIFICATION="failed"
         return 1
     fi
+}
+
+write_report() {
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
+    REPORT_FILE="$LOG_DIR/backup_validation_$timestamp.md"
+    {
+        echo "# Android Backup Validation"
+        echo "- Timestamp: $(date -Iseconds)"
+        echo "- Device Model: $DEVICE_MODEL"
+        echo "- Android Version: $DEVICE_OS"
+        echo "- Backup Transport: $BACKUP_TRANSPORT"
+        echo "- Package: $APP_PACKAGE"
+        echo "- Manual Verification: ${USER_VERIFICATION:-skipped}"
+        echo "- Backup Command Output:"
+        echo '```'
+        echo "$BACKUP_RESULT"
+        echo '```'
+        echo "- Backup Set Entry:"
+        echo '```'
+        echo "$BACKUPSET_LINE"
+        echo '```'
+        echo "- Restore Command Output:"
+        echo '```'
+        echo "$RESTORE_RESULT"
+        echo '```'
+    } > "$REPORT_FILE"
+    echo "📄 Validation report written to $REPORT_FILE"
 }
 
 # Main menu
@@ -195,6 +250,7 @@ full_test() {
     
     # Step 2: Backup
     backup_app
+    collect_transport_info
     
     # Step 3: Check backup status
     if ! check_backup_status; then
@@ -209,9 +265,12 @@ full_test() {
     restore_app
     
     # Step 6: Verify
+    USER_VERIFICATION="skipped"
     if verify_restore; then
+        write_report
         echo "🎉 Full backup/restore test PASSED!"
     else
+        write_report
         echo "💥 Full backup/restore test FAILED!"
     fi
 }
