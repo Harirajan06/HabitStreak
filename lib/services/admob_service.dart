@@ -9,7 +9,7 @@ class AdmobService {
       return 'ca-app-pub-3940256099942544/1033173712'; // Test ID
     }
     if (Platform.isAndroid) {
-      return 'ca-app-pub-7032488559595942/1531318834'; // Android Production ID
+      return 'ca-app-pub-7032488559595942/4895062359'; // Android Production ID
     } else if (Platform.isIOS) {
       return 'ca-app-pub-7032488559595942/2195138598'; // iOS Production ID
     } else {
